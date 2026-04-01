@@ -1,0 +1,125 @@
+.leaderboard-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.leaderboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.leaderboard-tabs {
+  display: flex;
+  gap: 0.5rem;
+  background: rgba(15, 15, 15, 0.8);
+  padding: 0.35rem;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+}
+
+.lb-tab {
+  padding: 0.5rem 1.25rem;
+  border-radius: 7px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  transition: all 0.2s ease;
+}
+
+.lb-tab:hover {
+  color: white;
+}
+
+.lb-tab.active {
+  background: var(--color-red);
+  color: white;
+  box-shadow: 0 4px 12px rgba(255, 0, 0, 0.4);
+}
+
+.leaderboard-table {
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.lb-table-head,
+.lb-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 150px 100px 120px;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  gap: 1rem;
+}
+
+.lb-table-head {
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--glass-border);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+}
+
+.lb-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.2s;
+}
+
+.lb-row:last-child {
+  border-bottom: none;
+}
+
+.lb-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.lb-row.top-three {
+  background: linear-gradient(90deg, rgba(255, 0, 0, 0.04), transparent);
+}
+
+.lb-rank {
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.lb-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.lb-region {
+  font-size: 0.85rem;
+}
+
+.lb-rating {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.lb-orders {
+  font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+  .lb-table-head,
+  .lb-row {
+    grid-template-columns: 50px 1fr 80px 70px;
+  }
+
+  .lb-orders {
+    display: none;
+  }
+
+  .lb-table-head span:last-child {
+    display: none;
+  }
+
+  .leaderboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

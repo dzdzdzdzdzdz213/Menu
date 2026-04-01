@@ -1,0 +1,62 @@
+.qr-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  max-width: 300px;
+  background: linear-gradient(to bottom, rgba(20,20,20,0.8), rgba(0,0,0,0.9));
+  border-top-color: rgba(255, 0, 0, 0.2);
+}
+
+.qr-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.qr-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.qr-subtitle {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.qr-display-container {
+  padding: 0.5rem;
+  background: white; /* Required for highest contrast QR scanning reliability */
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.qr-svg-wrapper {
+  background: black;
+  border-radius: 8px;
+  padding: 0.25rem;
+  display: flex;
+}
+
+.qr-table-info {
+  background: rgba(255,0,0,0.1);
+  color: var(--color-red);
+  padding: 0.5rem 1.5rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(255,0,0,0.2);
+}
+
+.qr-table-info span {
+  font-weight: 800;
+}
+
+.qr-action {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  justify-content: center;
+}

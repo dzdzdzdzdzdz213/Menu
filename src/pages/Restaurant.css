@@ -1,0 +1,92 @@
+.restaurant-page {
+  padding-bottom: 4rem;
+}
+
+.restaurant-hero {
+  position: relative;
+  height: 400px;
+  width: 100%;
+  border-radius: 0 0 24px 24px;
+  overflow: hidden;
+  margin-bottom: 3rem;
+}
+
+.restaurant-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.restaurant-hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to top, rgba(10, 10, 10, 0.95) 0%, rgba(10, 10, 10, 0.3) 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 3rem 0; /* Align with container */
+}
+
+.restaurant-info h1 {
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  color: white;
+}
+
+.restaurant-stats {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.restaurant-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.map-container {
+  width: 100%;
+  height: 250px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+}
+
+.map-container iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Responsive constraints */
+@media (max-width: 990px) {
+  .restaurant-page .container {
+    grid-template-columns: 1fr !important;
+  }
+  .restaurant-sidebar .glass {
+    position: static !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .restaurant-hero {
+    height: 320px;
+    border-radius: 0;
+  }
+  .restaurant-info h1 {
+    font-size: 2.2rem;
+  }
+  .restaurant-stats {
+    gap: 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
