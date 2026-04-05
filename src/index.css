@@ -129,3 +129,39 @@ button {
 .text-muted {
   color: var(--color-text-muted);
 }
+
+/* Skeleton Loading Utilities */
+:root {
+  --skeleton-bg-1: rgba(255, 255, 255, 0.05);
+  --skeleton-bg-2: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="light"] {
+  --skeleton-bg-1: rgba(0, 0, 0, 0.05);
+  --skeleton-bg-2: rgba(0, 0, 0, 0.1);
+}
+
+@keyframes skeleton-pulse {
+  0% { background-color: var(--skeleton-bg-1); }
+  50% { background-color: var(--skeleton-bg-2); }
+  100% { background-color: var(--skeleton-bg-1); }
+}
+
+.skeleton-pulse {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes slideFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-transition {
+  animation: slideFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

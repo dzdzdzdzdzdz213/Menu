@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { MapPin, Star, Clock, Loader2, Grid as GridIcon, Image as ImageIcon, MessageSquare, Calendar } from 'lucide-react';
+import { MapPin, Star, Clock, Loader2, Grid as GridIcon, Image as ImageIcon, MessageSquare, Calendar, Store, ImageOff } from 'lucide-react';
 import FoodCard from '../components/FoodCard';
+import { FoodCardSkeleton, RestaurantHeaderSkeleton } from '../components/Skeletons';
+import EmptyState from '../components/EmptyState';
 import ReviewSystem from '../components/ReviewSystem';
 import BookingEngine from '../components/BookingEngine';
 import { supabase } from '../lib/supabase';
 import { useApp } from '../context/AppContext';
+import { useSEO } from '../hooks/useSEO';
 import './Restaurant.css';
 
 const Restaurant = () => {
@@ -15,6 +18,8 @@ const Restaurant = () => {
   const [foods, setFoods] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('Menu');
+  const [cuisineFilter, setCuisineFilter] = useState('All');
+  const [sortOrder, setSortOrder] = useState('default');
 
   useEffect(() => {
     const fetchRestaurantData = async () => {
@@ -31,10 +36,12 @@ const Restaurant = () => {
           .select('*')
           .eq('merchant_id', id);
 
-        const realProducts = data && data.length > 0 ? data.map(item => ({
+        const realProducts = data && data.length > 0 ? data.map((item, index) => ({
           ...item,
           brand: restaurantName,
-          imageUrl: item.image_url
+          imageUrl: item.image_url,
+          rating: item.rating || (4 + Math.random()).toFixed(1), 
+          cuisine: item.category || ['Pizza', 'Healthy', 'Traditional', 'Fast Food'][index % 4]
         })) : [];
 
         setMerchant({
@@ -47,7 +54,13 @@ const Restaurant = () => {
         
         const localInventory = JSON.parse(localStorage.getItem(`merchant_inventory_${id}`) || '[]');
         if (localInventory.length > 0 && realProducts.length === 0) {
-           setFoods(localInventory.map(i => ({...i, brand: restaurantName, imageUrl: i.image_url})));
+           setFoods(localInventory.map((i, idx) => ({
+             ...i, 
+             brand: restaurantName, 
+             imageUrl: i.image_url,
+             rating: i.rating || (4 + Math.random()).toFixed(1),
+             cuisine: i.category || ['Pizza', 'Healthy', 'Traditional', 'Fast Food'][idx % 4]
+           })));
         } else {
            setFoods(realProducts);
         }
@@ -61,24 +74,88 @@ const Restaurant = () => {
     fetchRestaurantData();
   }, [id]);
 
+  useSEO({
+    title: merchant ? merchant.name : 'Restaurant',
+    description: merchant ? `Order from ${merchant.name} on Menu.` : 'Restaurant details.',
+    image: merchant ? merchant.heroImage : '/favicon.svg',
+    url: `/restaurant/${id}`
+  });
+
   if (isLoading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '10rem', minHeight: '100vh' }}><Loader2 className="animate-spin text-red" size={48} /></div>;
+    return (
+      <div className="restaurant-page page-transition">
+        <RestaurantHeaderSkeleton />
+        <div className="container" style={{ paddingTop: '3rem' }}>
+          <div className="bento-grid">
+             {[1, 2, 3, 4].map(i => <FoodCardSkeleton key={i} />)}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const renderTabContent = () => {
     switch(activeTab) {
-      case 'Menu':
-        return foods.length > 0 ? (
-          <div className="bento-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
-            {foods.map((food, idx) => (
-              <FoodCard key={food.id || idx} item={food} />
-            ))}
+      case 'Menu': {
+        const cuisines = ['All', ...new Set(foods.map(f => f.cuisine))];
+        let processedFoods = [...foods];
+        
+        if (cuisineFilter !== 'All') {
+          processedFoods = processedFoods.filter(f => f.cuisine === cuisineFilter);
+        }
+        
+        if (sortOrder === 'desc') {
+          processedFoods.sort((a, b) => b.rating - a.rating);
+        } else if (sortOrder === 'asc') {
+          processedFoods.sort((a, b) => a.rating - b.rating);
+        }
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            {foods.length > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
+                  {cuisines.map(c => (
+                    <button 
+                      key={c}
+                      onClick={() => setCuisineFilter(c)}
+                      className={`filter-chip ${cuisineFilter === c ? 'active' : ''}`}
+                      style={{ padding: '0.4rem 1rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', border: '1px solid var(--glass-border)', background: cuisineFilter === c ? 'var(--color-red)' : 'transparent', color: cuisineFilter === c ? 'white' : 'var(--color-text-muted)' }}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Star size={16} className="text-muted" />
+                  <select 
+                    value={sortOrder} 
+                    onChange={(e) => setSortOrder(e.target.value)}
+                    style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--glass-border)', color: 'white', fontSize: '0.85rem' }}
+                  >
+                    <option value="default">Default Sort</option>
+                    <option value="desc">Highest Rated</option>
+                    <option value="asc">Lowest Rated</option>
+                  </select>
+                </div>
+              </div>
+            )}
+            {processedFoods.length > 0 ? (
+              <div className="bento-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
+                {processedFoods.map((food, idx) => (
+                  <FoodCard key={food.id || idx} item={food} />
+                ))}
+              </div>
+            ) : (
+               <EmptyState 
+                 icon={Store} 
+                 title="No matches" 
+                 message="No items match your filter criteria." 
+               />
+            )}
           </div>
-        ) : (
-           <div className="empty-state text-center glass" style={{ padding: '4rem', borderRadius: '16px' }}>
-              <p className="text-muted">Digital Menu currently unavailable.</p>
-           </div>
         );
+      }
       
       case 'Gallery':
         return foods.length > 0 ? (
@@ -90,16 +167,15 @@ const Restaurant = () => {
             ))}
           </div>
         ) : (
-          <div className="empty-state text-center glass" style={{ padding: '4rem', borderRadius: '16px' }}>
-             <p className="text-muted">No photos in the gallery yet.</p>
-          </div>
+           <EmptyState 
+             icon={ImageOff} 
+             title="Gallery Empty" 
+             message="No photos in the gallery yet." 
+           />
         );
 
       case 'Reviews':
-        return <ReviewSystem initialReviews={[
-          {id: 1, user: 'Ahmed K.', rating: 5, text: 'Amazing food and great atmosphere!', date: '2 days ago'},
-          {id: 2, user: 'Sarah L.', rating: 4, text: 'Very good service, but a bit crowded.', date: '1 week ago'}
-        ]} />;
+        return <ReviewSystem entityId={id} type="merchant" initialReviews={[]} />;
         
       case 'Reservations':
         return <BookingEngine />;
@@ -110,7 +186,7 @@ const Restaurant = () => {
   };
 
   return (
-    <div className="restaurant-page">
+    <div className="restaurant-page page-transition">
       <section className="restaurant-hero">
         <img src={merchant.heroImage} alt={merchant.name} className="restaurant-hero-img" />
         <div className="restaurant-hero-overlay">
@@ -134,34 +210,34 @@ const Restaurant = () => {
       <div className="container" style={{ display: 'flex', flexDirection: 'column', gap: '3rem', marginTop: '-2rem', zIndex: 10, position: 'relative' }}>
         
         {/* Instagram Style Tab Navigation */}
-        <div className="profile-tabs glass" style={{ display: 'flex', justifyContent: 'space-around', padding: '1rem', borderRadius: '16px', overflowX: 'auto', gap: '1rem' }}>
+        <div className="profile-tabs glass">
           <button 
             onClick={() => setActiveTab('Menu')}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', borderRadius: '8px', background: activeTab === 'Menu' ? 'rgba(255,255,255,0.1)' : 'transparent', color: activeTab === 'Menu' ? 'white' : 'var(--color-text-muted)', fontWeight: activeTab === 'Menu' ? 'bold' : 'normal', transition: 'all 0.2s', whiteSpace: 'nowrap' }}
+            className={`tab-btn ${activeTab === 'Menu' ? 'active' : ''}`}
           >
             <GridIcon size={18} /> Menu
           </button>
           <button 
             onClick={() => setActiveTab('Gallery')}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', borderRadius: '8px', background: activeTab === 'Gallery' ? 'rgba(255,255,255,0.1)' : 'transparent', color: activeTab === 'Gallery' ? 'white' : 'var(--color-text-muted)', fontWeight: activeTab === 'Gallery' ? 'bold' : 'normal', transition: 'all 0.2s', whiteSpace: 'nowrap' }}
+            className={`tab-btn ${activeTab === 'Gallery' ? 'active' : ''}`}
           >
             <ImageIcon size={18} /> Gallery
           </button>
           <button 
             onClick={() => setActiveTab('Reviews')}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', borderRadius: '8px', background: activeTab === 'Reviews' ? 'rgba(255,255,255,0.1)' : 'transparent', color: activeTab === 'Reviews' ? 'white' : 'var(--color-text-muted)', fontWeight: activeTab === 'Reviews' ? 'bold' : 'normal', transition: 'all 0.2s', whiteSpace: 'nowrap' }}
+            className={`tab-btn ${activeTab === 'Reviews' ? 'active' : ''}`}
           >
             <MessageSquare size={18} /> Reviews
           </button>
           <button 
             onClick={() => setActiveTab('Reservations')}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', borderRadius: '8px', background: activeTab === 'Reservations' ? 'rgba(255,255,255,0.1)' : 'transparent', color: activeTab === 'Reservations' ? 'white' : 'var(--color-text-muted)', fontWeight: activeTab === 'Reservations' ? 'bold' : 'normal', transition: 'all 0.2s', whiteSpace: 'nowrap' }}
+            className={`tab-btn ${activeTab === 'Reservations' ? 'active' : ''}`}
           >
             <Calendar size={18} /> Reserve
           </button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 350px', gap: '3rem' }} className="restaurant-main-grid">
+        <div className="restaurant-main-grid">
           
           <main className="restaurant-content">
             {renderTabContent()}

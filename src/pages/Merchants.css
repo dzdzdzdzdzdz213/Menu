@@ -200,3 +200,26 @@
     flex-direction: column;
   }
 }
+
+@media (max-width: 600px) {
+  .inventory-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  .merchant-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .btn-primary, .btn-outline {
+    width: 100%;
+  }
+  .dash-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .dashboard-content {
+    padding: 1.5rem 1rem;
+  }
+}

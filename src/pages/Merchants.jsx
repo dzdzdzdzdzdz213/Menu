@@ -3,6 +3,8 @@ import { Camera, Image as ImageIcon, Upload, CheckCircle2, Loader2, Plus, X } fr
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { supabase } from '../lib/supabase';
+import toast from 'react-hot-toast';
+import { useSEO } from '../hooks/useSEO';
 import './Merchants.css';
 
 const Merchants = () => {
@@ -42,18 +44,24 @@ const Merchants = () => {
     fetchMerchantData();
   }, [user]);
 
+  useSEO({
+    title: 'Merchant Dashboard',
+    description: 'Manage your restaurant inventory, orders, and storefront details.',
+    url: '/merchants'
+  });
+
   const handleGenerateQR = () => {
     setIsGenerating(true);
     setTimeout(() => {
       setIsGenerating(false);
-      alert('QR Codes generated! Sent to your registered email.');
+      toast.success('QR Codes generated! Sent to your registered email.');
     }, 1500);
   };
 
   const handleAddItemSubmit = (e) => {
     e.preventDefault();
     if (!newItem.name || !newItem.price) {
-      alert("Name and Price are required.");
+      toast.error("Name and Price are required.");
       return;
     }
     
@@ -89,7 +97,7 @@ const Merchants = () => {
   };
 
   return (
-    <div className="merchant-page container">
+    <div className="merchant-page container page-transition">
       <div className="merchant-header glass">
         <div className="merchant-profile">
           <div className="merchant-avatar-placeholder glass">
@@ -234,11 +242,12 @@ const Merchants = () => {
               </div>
 
               <button className="btn-primary" onClick={() => {
-                const p = JSON.parse(localStorage.getItem(`merchant_profile_${user?.id}`) || '{}');
-                p.name = document.getElementById('rest_name').value;
-                p.address = document.getElementById('rest_addr').value;
-                localStorage.setItem(`merchant_profile_${user?.id}`, JSON.stringify(p));
-                alert('Success! Your mapping location and profile details are completely updated.');
+                const settings = {
+                  name: document.getElementById('rest_name').value,
+                  address: document.getElementById('rest_addr').value
+                };
+                localStorage.setItem(`merchant_profile_${user?.id || 'demo'}`, JSON.stringify(settings));
+                toast.success('Success! Your mapping location and profile details are completely updated.');
               }}>Save and Update Map</button>
             </div>
           )}

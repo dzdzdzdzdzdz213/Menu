@@ -1,16 +1,19 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { AppProvider } from './context/AppContext';
 import Navigation from './components/Navigation';
 import Footer from './components/Footer';
 import CartDrawer from './components/CartDrawer';
-import Home from './pages/Home';
-import Heritage from './pages/Heritage';
-import Merchants from './pages/Merchants';
-import Delivery from './pages/Delivery';
-import Search from './pages/Search';
-import Account from './pages/Account';
-import Restaurant from './pages/Restaurant';
+const Home = React.lazy(() => import('./pages/Home'));
+const Heritage = React.lazy(() => import('./pages/Heritage'));
+const Merchants = React.lazy(() => import('./pages/Merchants'));
+const Delivery = React.lazy(() => import('./pages/Delivery'));
+const Search = React.lazy(() => import('./pages/Search'));
+const Account = React.lazy(() => import('./pages/Account'));
+const Restaurant = React.lazy(() => import('./pages/Restaurant'));
+const Checkout = React.lazy(() => import('./pages/Checkout'));
+const OrderHistory = React.lazy(() => import('./pages/OrderHistory'));
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -21,22 +24,35 @@ function AppInner() {
         <Navigation />
         <CartDrawer />
         <main>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/heritage" element={<Heritage />} />
-            <Route path="/merchants" element={
-              <ProtectedRoute>
-                <Merchants />
-              </ProtectedRoute>
-            } />
-            <Route path="/delivery" element={<Delivery />} />
-            <Route path="/search" element={<Search />} />
-            <Route path="/account" element={<Account />} />
-            <Route path="/restaurant/:id" element={<Restaurant />} />
-            <Route path="*" element={<Home />} />
-          </Routes>
+          <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh', fontSize: '1.2rem', color: '#666' }}>Loading...</div>}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/heritage" element={<Heritage />} />
+              <Route path="/merchants" element={
+                <ProtectedRoute>
+                  <Merchants />
+                </ProtectedRoute>
+              } />
+              <Route path="/delivery" element={<Delivery />} />
+              <Route path="/search" element={<Search />} />
+              <Route path="/account" element={<Account />} />
+              <Route path="/restaurant/:id" element={<Restaurant />} />
+              <Route path="/checkout" element={
+                <ProtectedRoute>
+                  <Checkout />
+                </ProtectedRoute>
+              } />
+              <Route path="/history" element={
+                <ProtectedRoute>
+                  <OrderHistory />
+                </ProtectedRoute>
+              } />
+              <Route path="*" element={<Home />} />
+            </Routes>
+          </Suspense>
         </main>
         <Footer />
+        <Toaster position="bottom-right" toastOptions={{ style: { background: '#18181C', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' } }} />
       </div>
     </Router>
   );

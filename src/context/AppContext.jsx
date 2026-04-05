@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import toast from 'react-hot-toast';
 
 const TRANSLATIONS = {
   en: {
@@ -203,13 +204,17 @@ export const AppProvider = ({ children }) => {
     });
     if (error) {
       console.error('Error logging in:', error.message);
+      toast.error('Failed to log in. Please try again.');
       setIsLoggingIn(false);
+    } else {
+      toast.success('Successfully logged in.');
     }
   };
 
   const signOut = async () => {
     if (supabase?.auth?.signOut) {
       await supabase.auth.signOut();
+      toast.success('Successfully logged out.');
     }
   };
 
@@ -227,6 +232,7 @@ export const AppProvider = ({ children }) => {
   const addToCart = (item) => {
     setCart(prev => [...prev, { ...item, cartId: Date.now() }]);
     setIsCartOpen(true);
+    toast.success(`Added ${item.name || 'item'} to cart`);
   };
 
   const removeFromCart = (cartId) => {

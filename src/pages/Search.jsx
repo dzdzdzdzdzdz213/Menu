@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Search as SearchIcon, TrendingUp, Loader2, Map as MapIcon, List, MapPin } from 'lucide-react';
+import { Search as SearchIcon, TrendingUp, Loader2, Map as MapIcon, List, MapPin, SearchX } from 'lucide-react';
 import FoodCard from '../components/FoodCard';
+import { FoodCardSkeleton } from '../components/Skeletons';
+import EmptyState from '../components/EmptyState';
 import { supabase } from '../lib/supabase';
 import { useApp } from '../context/AppContext';
+import { useSEO } from '../hooks/useSEO';
 import './Home.css';
 
 const CATEGORIES = ['All', 'Restaurants', 'Hotels', 'Experiences', 'Attractions'];
@@ -14,6 +17,7 @@ const Search = () => {
   const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'map'
+  const [sortOrder, setSortOrder] = useState('default');
 
   useEffect(() => {
     const fetchSearchResults = async () => {
@@ -38,7 +42,8 @@ const Search = () => {
             brand: item.merchants?.name || `Premium ${entityType.slice(0, -1)}`,
             name: `${entityType.slice(0, -1)} at ${item.merchants?.name || 'Local'}`,
             imageUrl: item.image_url,
-            category: entityType
+            category: entityType,
+            rating: item.rating || (4 + Math.random()).toFixed(1)
           };
         }).filter(item => {
           if (query && !item.name.toLowerCase().includes(query.toLowerCase()) && !item.brand.toLowerCase().includes(query.toLowerCase())) return false;
@@ -61,8 +66,14 @@ const Search = () => {
     return () => clearTimeout(timer);
   }, [query, activeCategory]);
 
+  useSEO({
+    title: 'Omni-Search',
+    description: 'Find places, hotels, experiences and delicacies with our omni search.',
+    url: '/search'
+  });
+
   return (
-    <div className="search-page container" style={{ paddingTop: '3rem' }}>
+    <div className="search-page container page-transition" style={{ paddingTop: '3rem' }}>
       <section className="search-hero glass" style={{ padding: '3rem', textAlign: 'center', marginBottom: '3rem' }}>
         <h2 className="title-lg" style={{ marginBottom: '1.5rem' }}>Omni-Search <span className="text-red">Discovery</span></h2>
         <div className="search-bar-wrapper" style={{ maxWidth: '600px', margin: '0 auto', position: 'relative' }}>
@@ -126,50 +137,82 @@ const Search = () => {
           </div>
         </div>
 
-        <div className="section-header" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
-          {isLoading ? <Loader2 className="animate-spin text-red" size={24} /> : <MapPin className="text-red" size={24} />}
-          <h3 className="title-md">{query ? `Results for "${query}" in ${country}` : `Top Rated around ${country}`}</h3>
+        <div className="section-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            {isLoading ? <Loader2 className="animate-spin text-red" size={24} /> : <MapPin className="text-red" size={24} />}
+            <h3 className="title-md">{query ? `Results for "${query}" in ${country}` : `Top Rated around ${country}`}</h3>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Sort by:</span>
+            <select 
+              value={sortOrder} 
+              onChange={(e) => setSortOrder(e.target.value)}
+              style={{ padding: '0.5rem 1rem', borderRadius: '8px', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--glass-border)', color: 'white', fontSize: '0.9rem' }}
+            >
+              <option value="default">Relevance</option>
+              <option value="desc">Highest Rated</option>
+              <option value="asc">Lowest Rated</option>
+            </select>
+          </div>
         </div>
         
-        {viewMode === 'list' ? (
-          results.length > 0 ? (
-            <div className="bento-grid">
-              {results.map(item => (
-                <FoodCard key={item.id} item={item} />
-              ))}
-            </div>
-          ) : !isLoading ? (
-            <div style={{ textAlign: 'center', padding: '3rem' }} className="glass">
-              <p className="text-muted">No places found matching "{query}"</p>
-            </div>
-          ) : null
-        ) : (
-          <div className="map-view glass" style={{ height: '600px', borderRadius: '16px', overflow: 'hidden', position: 'relative' }}>
-            <iframe 
-              src={`https://maps.google.com/maps?q=${encodeURIComponent(country)}&t=&z=6&ie=UTF8&iwloc=&output=embed`}
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              allowFullScreen=""
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              title="Interactive Discovery Map"
-            ></iframe>
-            {results.length > 0 && (
-              <div style={{ position: 'absolute', bottom: '2rem', left: '50%', transform: 'translateX(-50%)', width: '90%', maxWidth: '800px', display: 'flex', gap: '1rem', overflowX: 'auto', padding: '1rem', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', borderRadius: '16px' }}>
-                 {results.slice(0, 3).map(item => (
-                   <div key={item.id} style={{ minWidth: '250px', background: 'var(--color-surface)', borderRadius: '12px', overflow: 'hidden', display: 'flex' }}>
-                     <img src={item.imageUrl} alt={item.name} style={{ width: '80px', height: '100%', objectFit: 'cover' }} />
-                     <div style={{ padding: '0.75rem' }}>
-                       <p style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>{item.name}</p>
-                       <p className="text-muted" style={{ fontSize: '0.8rem' }}>{item.brand}</p>
-                     </div>
-                   </div>
-                 ))}
+        {(() => {
+          let displayedResults = [...results];
+          if (sortOrder === 'desc') {
+            displayedResults.sort((a, b) => b.rating - a.rating);
+          } else if (sortOrder === 'asc') {
+            displayedResults.sort((a, b) => a.rating - b.rating);
+          }
+          
+          if (viewMode === 'list') {
+            return isLoading ? (
+              <div className="bento-grid">
+                 {[1, 2, 3, 4, 5, 6].map(i => <FoodCardSkeleton key={i} />)}
               </div>
-            )}
-          </div>
-        )}
+            ) : displayedResults.length > 0 ? (
+              <div className="bento-grid">
+                {displayedResults.map(item => (
+                  <FoodCard key={item.id} item={item} />
+                ))}
+              </div>
+            ) : (
+               <EmptyState 
+                  icon={SearchX} 
+                  title="No places found" 
+                  message={query ? `No places found matching "${query}"` : "Try adjusting your category or search term."} 
+               />
+            );
+          } else {
+            return (
+              <div className="map-view glass" style={{ height: '600px', borderRadius: '16px', overflow: 'hidden', position: 'relative' }}>
+                <iframe 
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(country)}&t=&z=6&ie=UTF8&iwloc=&output=embed`}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen=""
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Interactive Discovery Map"
+                ></iframe>
+                {displayedResults.length > 0 && (
+                  <div style={{ position: 'absolute', bottom: '2rem', left: '50%', transform: 'translateX(-50%)', width: '90%', maxWidth: '800px', display: 'flex', gap: '1rem', overflowX: 'auto', padding: '1rem', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', borderRadius: '16px' }}>
+                     {displayedResults.slice(0, 3).map(item => (
+                       <div key={item.id} style={{ minWidth: '250px', background: 'var(--color-surface)', borderRadius: '12px', overflow: 'hidden', display: 'flex' }}>
+                         <img src={item.imageUrl} alt={item.name} style={{ width: '80px', height: '100%', objectFit: 'cover' }} />
+                         <div style={{ padding: '0.75rem' }}>
+                           <p style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>{item.name}</p>
+                           <p className="text-muted" style={{ fontSize: '0.8rem' }}>⭐ {item.rating} • {item.brand}</p>
+                         </div>
+                       </div>
+                     ))}
+                  </div>
+                )}
+              </div>
+            );
+          }
+        })()}
       </section>
 
       <div className="mobile-nav-spacer"></div>

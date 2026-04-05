@@ -1,31 +1,35 @@
 import React, { useState } from 'react';
 import { X, Trash2, ShoppingBag, Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import './CartDrawer.css';
 
 const CartDrawer = () => {
-  const { isCartOpen, setIsCartOpen, cart, removeFromCart, t, user } = useApp();
+  const { isCartOpen, setIsCartOpen, cart, removeFromCart, addToCart, t, user } = useApp();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const navigate = useNavigate();
 
   if (!isCartOpen) return null;
 
   const total = cart.reduce((sum, item) => sum + item.price, 0);
 
-  const handleCheckout = () => {
-    if (!user) {
-      alert("Please log in to proceed to checkout.");
-      // Optional: push to /account by handling navigation or window location
-      return;
+  const groupedCartInfo = cart.reduce((acc, item) => {
+    if (!acc[item.id]) {
+      acc[item.id] = { item, quantity: 1, cartIds: [item.cartId] };
+    } else {
+      acc[item.id].quantity += 1;
+      acc[item.id].cartIds.push(item.cartId);
     }
-    
-    setIsCheckingOut(true);
-    // Simulate API call for secure checkout session
-    setTimeout(() => {
-      setIsCheckingOut(false);
-      alert('Checkout process initiated securely. Proceeding to payment...');
-      setIsCartOpen(false);
-      // Here usually window.location.href = data.checkoutUrl;
-    }, 1500);
+    return acc;
+  }, {});
+  
+  const groupedCart = Object.values(groupedCartInfo);
+
+
+  const handleCheckout = () => {
+    setIsCartOpen(false);
+    navigate('/checkout');
   };
 
   return (
@@ -47,14 +51,23 @@ const CartDrawer = () => {
             </div>
           ) : (
             <div className="cart-items">
-              {cart.map((item) => (
-                <div key={item.cartId} className="cart-item glass">
-                  <img src={item.imageUrl} alt={item.name} className="cart-item-img" />
+              {groupedCart.map((group) => (
+                <div key={group.item.id} className="cart-item glass">
+                  <img src={group.item.imageUrl} alt={group.item.name} className="cart-item-img" />
                   <div className="cart-item-info">
-                    <h4>{item.name}</h4>
-                    <span className="text-red">{item.price} DZD</span>
+                    <h4>{group.item.name}</h4>
+                    <span className="text-red">{group.item.price * group.quantity} DZD</span>
                   </div>
-                  <button className="remove-item" onClick={() => removeFromCart(item.cartId)}>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'rgba(0,0,0,0.3)', padding: '0.2rem', borderRadius: '8px' }}>
+                    <button style={{ padding: '0.25rem 0.5rem', borderRadius: '4px', background: 'rgba(255,255,255,0.05)', color: 'white' }} onClick={() => removeFromCart(group.cartIds[group.cartIds.length - 1])}>−</button>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 'bold', width: '24px', textAlign: 'center' }}>{group.quantity}</span>
+                    <button style={{ padding: '0.25rem 0.5rem', borderRadius: '4px', background: 'rgba(255,255,255,0.05)', color: 'white' }} onClick={() => addToCart(group.item)}>+</button>
+                  </div>
+
+                  <button className="remove-item" onClick={() => {
+                    group.cartIds.forEach(id => removeFromCart(id));
+                  }} style={{ marginLeft: '1rem' }}>
                     <Trash2 size={18} />
                   </button>
                 </div>

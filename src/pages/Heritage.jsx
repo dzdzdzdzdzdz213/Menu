@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
+import { ChevronLeft, ChevronRight, Play, Maximize2, X, Plus } from 'lucide-react';
 import FoodCard from '../components/FoodCard';
-import './Home.css';
+import { useApp } from '../context/AppContext';
+import { useSEO } from '../hooks/useSEO';
+import './Heritage.css';
 
 const HERITAGE_FOODS = [
   {
@@ -36,8 +39,21 @@ const HERITAGE_FOODS = [
 ];
 
 const Heritage = () => {
+  const [activeStory, setActiveStory] = useState(null);
+  const scrollRef = useRef(null);
+
+  useSEO({
+    title: 'Culinary Heritage',
+    description: 'Explore the storied origins of traditional dishes and timeless family recipes.',
+    url: '/heritage'
+  });
+
+  const scrollMap = (dir) => {
+    // Implementation logic
+  };
+
   return (
-    <div className="home-page container">
+    <div className="heritage-page container page-transition">
       <section className="hero-section glass" style={{ minHeight: '300px' }}>
         <div className="hero-content">
           <h2 className="title-lg">Traditional <span className="text-red">Heritage</span></h2>

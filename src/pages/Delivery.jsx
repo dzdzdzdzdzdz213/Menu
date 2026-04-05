@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Bike, ShieldCheck, Map, DollarSign, ArrowRight } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useApp } from '../context/AppContext';
 import './Delivery.css';
 
@@ -25,23 +26,24 @@ const Delivery = () => {
     
     // Validate inputs
     if (formData.fullName.trim() === '' || formData.phoneNumber.trim() === '' || formData.city === '') {
-      alert("Please fill in all basic required fields.");
+      toast.error("Please fill in all basic required fields.");
       return;
     }
 
     if ((formData.vehicle === 'car' || formData.vehicle === 'motorcycle') && !formData.licenseFile) {
-      alert("Please upload a photo of your driver's license.");
+      toast.error("Please upload a photo of your driver's license.");
       return;
     }
 
     if (formData.vehicle === 'bicycle' && (!formData.isOver18 || !formData.idCardFile)) {
-      alert("You must be over 18 and upload a photo of your Identity Card to deliver by bicycle.");
+      toast.error("You must be over 18 and upload a photo of your Identity Card to deliver by bicycle.");
       return;
     }
 
     // Secure handling simulation
     console.log("Submitting secure fleet application:", formData);
     setIsRegistered(true);
+    toast.success("Application successfully submitted!");
   };
 
   return (

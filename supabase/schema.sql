@@ -72,3 +72,33 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
+-- 6. Create Reviews Tables (Merchants and Products)
+CREATE TABLE IF NOT EXISTS public.merchant_reviews (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  merchant_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES public.profiles(id) DEFAULT auth.uid(),
+  user_name TEXT,
+  rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+  text TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.product_reviews (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id UUID REFERENCES public.products(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES public.profiles(id) DEFAULT auth.uid(),
+  user_name TEXT,
+  rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+  text TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.merchant_reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.product_reviews ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Merchant Reviews are viewable by everyone" ON public.merchant_reviews FOR SELECT USING (true);
+CREATE POLICY "Users can insert merchant reviews" ON public.merchant_reviews FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+
+CREATE POLICY "Product Reviews are viewable by everyone" ON public.product_reviews FOR SELECT USING (true);
+CREATE POLICY "Users can insert product reviews" ON public.product_reviews FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);

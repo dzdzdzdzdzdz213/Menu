@@ -4,9 +4,12 @@ import FoodCard from '../components/FoodCard';
 import QRCodeGenerator from '../components/QRCodeGenerator';
 import Leaderboard from '../components/Leaderboard';
 import { supabase } from '../lib/supabase';
-import { ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowRight, Loader2, UtensilsCrossed } from 'lucide-react';
+import { FoodCardSkeleton } from '../components/Skeletons';
+import EmptyState from '../components/EmptyState';
 import { NavLink } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { useSEO } from '../hooks/useSEO';
 import './Home.css';
 
 const COUNTRY_THEMES = {
@@ -57,12 +60,18 @@ const Home = () => {
     fetchFoods();
   }, []);
 
+  useSEO({
+    title: 'Top rated foods in ' + country,
+    description: 'Discover the absolute best local chefs and top-tier delicacies near you in ' + country + '.',
+    url: '/'
+  });
+
   const scrollToTrending = () => {
     trendingRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
-    <div className="home-page container">
+    <div className="home-page container page-transition">
 
 
 
@@ -77,8 +86,10 @@ const Home = () => {
         </div>
 
         {isLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
-            <Loader2 className="animate-spin text-red" size={40} />
+          <div className="bento-grid">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <FoodCardSkeleton key={i} />
+            ))}
           </div>
         ) : foods.length > 0 ? (
           <div className="bento-grid">
@@ -87,9 +98,11 @@ const Home = () => {
             ))}
           </div>
         ) : (
-          <div style={{ textAlign: 'center', padding: '4rem' }} className="glass">
-            <p className="text-muted">Once your Supabase seed is run, delicacies will appear here.</p>
-          </div>
+          <EmptyState 
+            icon={UtensilsCrossed} 
+            title="No delicacies found" 
+            message="Once your Supabase seed is run, delicacies will appear here." 
+          />
         )}
       </section>
 
