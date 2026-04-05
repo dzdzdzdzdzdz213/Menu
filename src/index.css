@@ -1,20 +1,21 @@
 :root {
-  /* Core Colors - Dark Mode (Softer "Deep Midnight" palette) */
-  --color-black: #0A0A0C;
-  --color-bg: #0F0F12;
-  --color-surface: #1A1A1E;
-  --color-red: #FF0000;
-  --color-red-hover: #CC0000;
+  /* Core Colors - Premium Appetizing Palette */
+  --color-black: #08080A;
+  --color-bg: #0C0C0E;
+  --color-surface: #18181C;
+  --color-red: #F54748; /* Appetizing warm red */
+  --color-red-hover: #D63D3E;
+  --color-orange: #FCA311; /* Food-friendly accent */
   --color-text: #FFFFFF;
-  --color-text-muted: #A0A0A0;
+  --color-text-muted: #A0A0A8;
 
   /* Glassmorphism Variables */
-  --glass-bg: rgba(22, 22, 26, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+  --glass-bg: rgba(24, 24, 28, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
 
   /* Typography */
-  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-family: 'Outfit', 'Inter', system-ui, sans-serif;
 }
 
 /* Light Mode */

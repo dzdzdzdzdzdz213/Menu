@@ -64,28 +64,7 @@ const Home = () => {
   return (
     <div className="home-page container">
 
-      {/* Hero Section */}
-      <section 
-        className="hero-section glass" 
-        style={{ 
-          background: COUNTRY_THEMES[country] || COUNTRY_THEMES['Algeria'],
-          transition: 'background 0.8s ease'
-        }}
-      >
-        <div className="hero-content">
-          <div className="hero-badge">{t.heroRegions}</div>
-          <h2 className="title-lg">{t.heroTitle1} <span className="text-red">{t.heroHighlight}</span><br />{t.heroTitle2}</h2>
-          <p className="hero-subtitle text-muted">
-            {t.heroSub}
-          </p>
-          <div className="hero-actions">
-            <RegionSelector />
-            <button className="btn-primary hero-cta" onClick={scrollToTrending}>
-              {t.exploreNow} <ArrowRight size={18} />
-            </button>
-          </div>
-        </div>
-      </section>
+
 
       {/* Trending Food Cards */}
       <section className="main-content">
@@ -112,6 +91,25 @@ const Home = () => {
             <p className="text-muted">Once your Supabase seed is run, delicacies will appear here.</p>
           </div>
         )}
+      </section>
+
+      <section className="interactive-map-section glass" style={{ marginBottom: '3rem', borderRadius: '16px', overflow: 'hidden' }}>
+        <div style={{ padding: '2rem' }}>
+          <h3 className="title-md" style={{ marginBottom: '0.5rem' }}>Discover Places Around {country}</h3>
+          <p className="text-muted" style={{ marginBottom: '1.5rem' }}>Find the best restaurants, cafes, and experiences directly on the map.</p>
+        </div>
+        <div style={{ padding: '0 2rem 2rem 2rem', height: '400px' }}>
+          <iframe 
+            src={`https://maps.google.com/maps?q=${encodeURIComponent(country)}&t=&z=6&ie=UTF8&iwloc=&output=embed`}
+            width="100%"
+            height="100%"
+            style={{ border: 0, borderRadius: '12px' }}
+            allowFullScreen=""
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            title="Home Interactive Map"
+          ></iframe>
+        </div>
       </section>
 
       {/* Top 100 Leaderboard */}

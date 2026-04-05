@@ -29,41 +29,7 @@ const Footer = () => {
           <NavLink to="/delivery">{t.delivery}</NavLink>
         </div>
 
-        <div className="footer-selectors">
-          <div className="selector-group">
-            <label className="selector-label text-muted">{t.selectCountry}</label>
-            <div className="custom-select-wrap">
-              <select
-                id="footer-country-select"
-                className="custom-select"
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-              >
-                {COUNTRIES.map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-              <span className="select-arrow">▾</span>
-            </div>
-          </div>
 
-          <div className="selector-group">
-            <label className="selector-label text-muted">{t.selectLanguage}</label>
-            <div className="lang-btns">
-              {LANGUAGES.map(l => (
-                <button
-                  key={l.code}
-                  id={`lang-btn-${l.code}`}
-                  className={`lang-btn ${lang === l.code ? 'active' : ''}`}
-                  onClick={() => setLang(l.code)}
-                  title={l.label}
-                >
-                  {l.native}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
       </div>
 
       <div className="footer-bottom container">
