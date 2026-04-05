@@ -7,6 +7,12 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 let supabaseInstance;
 
 try {
+  if (!supabaseUrl || !supabaseAnonKey) {
+     console.error('⚠️ CRITICAL STARTUP WARNING ⚠️');
+     console.error('Supabase VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY are missing from your environment variables.');
+     console.error('The application will fall back to using a local mock client, but real database queries will fail.');
+  }
+
   if (supabaseUrl && supabaseUrl.startsWith('http') && supabaseAnonKey) {
     supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
   } else {

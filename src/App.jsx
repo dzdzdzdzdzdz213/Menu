@@ -14,12 +14,15 @@ const Account = React.lazy(() => import('./pages/Account'));
 const Restaurant = React.lazy(() => import('./pages/Restaurant'));
 const Checkout = React.lazy(() => import('./pages/Checkout'));
 const OrderHistory = React.lazy(() => import('./pages/OrderHistory'));
+const NotFound = React.lazy(() => import('./pages/NotFound'));
 import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 import './App.css';
 
 function AppInner() {
   return (
-    <Router>
+    <ErrorBoundary>
+      <Router>
       <div className="app-wrapper">
         <Navigation />
         <CartDrawer />
@@ -47,7 +50,7 @@ function AppInner() {
                   <OrderHistory />
                 </ProtectedRoute>
               } />
-              <Route path="*" element={<Home />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
         </main>
@@ -55,6 +58,7 @@ function AppInner() {
         <Toaster position="bottom-right" toastOptions={{ style: { background: '#18181C', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' } }} />
       </div>
     </Router>
+    </ErrorBoundary>
   );
 }
 
