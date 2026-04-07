@@ -2,9 +2,10 @@ import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AppProvider } from './context/AppContext';
+import { ToastProvider } from './context/ToastContext';
 import Navigation from './components/Navigation';
-import Footer from './components/Footer';
 import CartDrawer from './components/CartDrawer';
+<<<<<<< HEAD
 const Home = React.lazy(() => import('./pages/Home'));
 const Heritage = React.lazy(() => import('./pages/Heritage'));
 const Merchants = React.lazy(() => import('./pages/Merchants'));
@@ -17,6 +18,10 @@ const OrderHistory = React.lazy(() => import('./pages/OrderHistory'));
 const NotFound = React.lazy(() => import('./pages/NotFound'));
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
+=======
+import Home from './pages/Home';
+import Admin from './pages/Admin';
+>>>>>>> b3dd1fa (multiple)
 import './App.css';
 
 function AppInner() {
@@ -27,6 +32,7 @@ function AppInner() {
         <Navigation />
         <CartDrawer />
         <main>
+<<<<<<< HEAD
           <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh', fontSize: '1.2rem', color: '#666' }}>Loading...</div>}>
             <Routes>
               <Route path="/" element={<Home />} />
@@ -56,6 +62,14 @@ function AppInner() {
         </main>
         <Footer />
         <Toaster position="bottom-right" toastOptions={{ style: { background: '#18181C', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' } }} />
+=======
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="*" element={<Home />} />
+          </Routes>
+        </main>
+>>>>>>> b3dd1fa (multiple)
       </div>
     </Router>
     </ErrorBoundary>
@@ -65,7 +79,9 @@ function AppInner() {
 function App() {
   return (
     <AppProvider>
-      <AppInner />
+      <ToastProvider>
+        <AppInner />
+      </ToastProvider>
     </AppProvider>
   );
 }

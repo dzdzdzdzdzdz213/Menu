@@ -1,65 +1,38 @@
-import React, { useState, useEffect, useRef } from 'react';
-import RegionSelector from '../components/RegionSelector';
+import React, { useState, useEffect } from 'react';
 import FoodCard from '../components/FoodCard';
-import QRCodeGenerator from '../components/QRCodeGenerator';
-import Leaderboard from '../components/Leaderboard';
 import { supabase } from '../lib/supabase';
+<<<<<<< HEAD
 import { ArrowRight, Loader2, UtensilsCrossed } from 'lucide-react';
 import { FoodCardSkeleton } from '../components/Skeletons';
 import EmptyState from '../components/EmptyState';
 import { NavLink } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { useSEO } from '../hooks/useSEO';
+=======
+import { Loader2, Utensils } from 'lucide-react';
+>>>>>>> b3dd1fa (multiple)
 import './Home.css';
 
-const COUNTRY_THEMES = {
-  'Algeria': 'radial-gradient(circle at center, rgba(235, 64, 52, 0.15) 0%, rgba(5, 5, 5, 1) 100%)',
-  'Morocco': 'radial-gradient(circle at center, rgba(193, 39, 45, 0.15) 0%, rgba(5, 5, 5, 1) 100%)',
-  'Tunisia': 'radial-gradient(circle at center, rgba(224, 33, 36, 0.15) 0%, rgba(5, 5, 5, 1) 100%)',
-  'Gulf Countries': 'radial-gradient(circle at center, rgba(181, 166, 66, 0.15) 0%, rgba(5, 5, 5, 1) 100%)',
-  'Europe': 'radial-gradient(circle at center, rgba(74, 144, 226, 0.15) 0%, rgba(5, 5, 5, 1) 100%)',
-};
-
 const Home = () => {
-  const { country, t } = useApp();
   const [foods, setFoods] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const trendingRef = useRef(null);
 
   useEffect(() => {
     const fetchFoods = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('products')
-          .select(`
-            *,
-            merchants (
-              name
-            )
-          `)
-          .limit(6);
-
-        if (error) throw error;
-        
-        // Transform the joined data to match the FoodCard prop expectations
-        const formattedData = data.map(item => ({
-          ...item,
-          brand: item.merchants?.name || 'Local Vendor',
-          imageUrl: item.image_url // map DB column to prop name
-        }));
-
-        setFoods(formattedData);
+        const { data } = await supabase.from('products').select();
+        setFoods(data || []);
       } catch (err) {
-        console.error('Error fetching foods:', err.message);
+        console.error('Error fetching foods:', err);
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchFoods();
   }, []);
 
+<<<<<<< HEAD
   useSEO({
     title: 'Top rated foods in ' + country,
     description: 'Discover the absolute best local chefs and top-tier delicacies near you in ' + country + '.',
@@ -90,12 +63,31 @@ const Home = () => {
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <FoodCardSkeleton key={i} />
             ))}
+=======
+  return (
+    <div className="home-page container" style={{ paddingTop: '100px', paddingBottom: '4rem' }}>
+      
+      <section className="section-hud glass slide-in">
+        <div className="section-header" style={{ marginBottom: '2rem', textAlign: 'center' }}>
+          <div>
+            <span className="hud-label" style={{ justifyContent: 'center' }}>
+              <Utensils size={14} style={{ marginRight: 8 }} /> Our Menu
+            </span>
+            <h3 className="title-md" style={{ fontSize: '2.5rem', marginTop: '1rem' }}>Delicious <span className="text-red">Choices</span></h3>
           </div>
-        ) : foods.length > 0 ? (
+        </div>
+
+        {isLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '8rem' }}>
+            <Loader2 className="animate-spin text-red" size={32} />
+>>>>>>> b3dd1fa (multiple)
+          </div>
+        ) : (
           <div className="bento-grid">
             {foods.map(food => (
               <FoodCard key={food.id} item={food} />
             ))}
+<<<<<<< HEAD
           </div>
         ) : (
           <EmptyState 
@@ -162,6 +154,18 @@ const Home = () => {
 
       {/* Spacer for mobile nav */}
       <div className="mobile-nav-spacer"></div>
+=======
+            {foods.length === 0 && (
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: 'var(--color-text-muted)' }}>
+                No items available on the menu yet. Check back soon!
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
+      <div className="mobile-nav-spacer" />
+>>>>>>> b3dd1fa (multiple)
     </div>
   );
 };

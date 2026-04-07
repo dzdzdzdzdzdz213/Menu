@@ -1,161 +1,154 @@
+/* Home — Luminous Restoration: Studio v.30 */
+
 .home-page {
-  padding-top: 2rem;
-  padding-bottom: 2rem;
+  padding-top: 8rem;
+  padding-bottom: 5rem;
   display: flex;
   flex-direction: column;
-  gap: 3rem;
+  gap: 8rem;
 }
 
-.hero-section {
+/* ── LUMINOUS HERO: CELESTIAL MASTERPIECE ────────────────── */
+.discovery-header {
   padding: 4rem 2rem;
   text-align: center;
   position: relative;
   overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 400px;
-  background: radial-gradient(circle at center, rgba(255, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.8) 100%);
-  border-color: rgba(255, 0, 0, 0.15);
 }
 
-.hero-content {
-  position: relative;
-  z-index: 10;
-  max-width: 800px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.hero-subtitle {
-  font-size: 1.25rem;
-  margin-bottom: 1.5rem;
-  line-height: 1.6;
-}
-
-.hero-badge {
-  display: inline-block;
-  background: rgba(255, 0, 0, 0.1);
-  border: 1px solid rgba(255, 0, 0, 0.25);
-  color: var(--color-red);
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 0.4rem 1rem;
-  border-radius: 20px;
-  margin-bottom: 0.5rem;
-  animation: fadeInDown 0.5s ease both;
-}
-
-.hero-actions {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-}
-
-.hero-cta {
-  display: flex;
+.discovery-badge {
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  padding: 0.6rem 1.5rem;
+  background: #FFF;
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 40px;
+  font-size: 0.72rem;
+  font-weight: 1000;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+  margin-bottom: 2rem;
 }
 
-@keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-8px); }
-  to   { opacity: 1; transform: translateY(0); }
+.discovery-title {
+  margin: 2.5rem 0;
+  font-weight: 1000;
+  font-size: clamp(3.5rem, 11vw, 7.5rem);
+  letter-spacing: -0.06em;
+  line-height: 0.9;
+}
+
+.discovery-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 6rem;
+}
+
+/* CELESTIAL EATER: STUDIO CONTAINER */
+.hero-studio-container {
+  position: relative;
+  max-width: 1400px;
+  margin: 0 auto;
+  border-radius: 40px;
+  overflow: hidden;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.08);
+}
+
+.hero-studio-img {
+  width: 100%;
+  height: 650px;
+  object-fit: cover;
+  transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+  cursor: pointer;
+}
+
+.hero-studio-img:hover {
+  transform: scale(1.02);
+}
+
+.studio-prismatic-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, transparent 20%, rgba(255,255,255,0.05) 100%);
+  pointer-events: none;
+}
+
+/* METRICS HUD */
+.hero-metrics {
+  display: flex;
+  justify-content: center;
+  gap: 6rem;
+  margin-top: 6rem;
+}
+
+.metric-node {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.metric-node:hover { transform: translateY(-5px); }
+
+.node-val { font-size: 2rem; font-weight: 1000; letter-spacing: -0.04em; color: #000; }
+.node-lbl { font-size: 0.65rem; font-weight: 950; text-transform: uppercase; letter-spacing: 0.2em; color: var(--color-text-muted); }
+
+/* ── SECTION HUD DENSITY ────────────────── */
+.section-hud {
+  background: #FFF;
+  border: 1px solid rgba(0,0,0,0.08);
+  padding: 6rem 4rem;
+  border-radius: 48px;
+  box-shadow: 0 20px 80px rgba(0,0,0,0.03);
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
+  align-items: flex-end;
+  margin-bottom: 5.5rem;
 }
 
+.title-md {
+  font-weight: 1000;
+  letter-spacing: -0.04em;
+}
+
+/* SCAN SPOTLIGHT */
 .spotlight-section {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 3rem;
-  padding: 3rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 8rem;
   align-items: center;
-  background: linear-gradient(120deg, rgba(15,15,15,1), rgba(0,0,0,1));
 }
 
-.merchant-stats {
-  display: flex;
-  gap: 2rem;
+.qr-container {
+  background: #F8FAFC;
+  padding: 5rem;
+  border-radius: 48px;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 40px 100px rgba(0,0,0,0.05);
+  transition: all 0.4s;
 }
 
-.stat {
-  display: flex;
-  flex-direction: column;
+.qr-container:hover {
+  transform: translateY(-5px);
+  border-color: #000;
 }
 
-.stat-value {
-  font-size: 2.5rem;
-  font-weight: 900;
-  line-height: 1;
-  margin-bottom: 0.5rem;
-}
-
-.stat-label {
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-  font-weight: 500;
-}
-
-.qr-demonstration {
-  display: flex;
-  justify-content: center;
-}
-
-.mobile-nav-spacer {
-  height: 80px;
-  display: none;
-}
-
-
-@media (max-width: 900px) {
-  .spotlight-section {
-    grid-template-columns: 1fr;
-    text-align: center;
-    padding: 2rem 1rem;
-  }
-  
-  .merchant-stats {
-    justify-content: center;
-    margin-bottom: 2rem;
-  }
+@media (max-width: 1100px) {
+  .spotlight-section { grid-template-columns: 1fr; gap: 4rem; text-align: center; }
+  .section-header { flex-direction: column; align-items: center; gap: 3rem; text-align: center; }
+  .discovery-title { font-size: 4.5rem; }
 }
 
 @media (max-width: 800px) {
-  .hero-section {
-    padding: 3rem 1rem;
-    min-height: auto;
-  }
-
-  .title-lg {
-    font-size: 2rem;
-  }
-  
-  .hero-actions {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .region-selector-container {
-    width: 100%;
-  }
-
-  .section-header {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: flex-start;
-  }
-  
-  .mobile-nav-spacer {
-    display: block;
-  }
+  .home-page { padding-top: 7rem; }
+  .hero-studio-img { height: 350px; }
+  .section-hud { padding: 4rem 1.5rem; border-radius: 40px; }
+  .title-md { font-size: 2.25rem !important; }
 }

@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
+<<<<<<< HEAD
 import { Home, Compass, User, Search, ShoppingBag, Globe, Sun, Moon } from 'lucide-react';
+=======
+import { Home, ShoppingBag } from 'lucide-react';
+>>>>>>> b3dd1fa (multiple)
 import { useApp } from '../context/AppContext';
 import RegionSelector from './RegionSelector';
 import AccountSidebar from './AccountSidebar';
 import './Navigation.css';
 
 const Navigation = () => {
+<<<<<<< HEAD
   const { t, cart, setIsCartOpen, theme, toggleTheme, lang, setLang } = useApp();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -23,21 +28,33 @@ const Navigation = () => {
           </button>
 
           <nav className="desktop-nav" style={{ flex: 1, justifyContent: 'center' }}>
+=======
+  const { cart, setIsCartOpen } = useApp();
+
+  return (
+    <>
+      <header className="desktop-header glass slide-in">
+        <div className="header-container">
+          
+          {/* Logo */}
+          <NavLink to="/" className="logo-link">
+            <h1 className="logo-text">Restaurant<span className="logo-dot">.</span></h1>
+          </NavLink>
+
+          {/* Universal Nav Links */}
+          <nav className="desktop-nav">
+>>>>>>> b3dd1fa (multiple)
             <NavLink to="/" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
-              {t.home}
+               Menu
             </NavLink>
-            <NavLink to="/heritage" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
-              {t.heritage}
-            </NavLink>
-            <NavLink to="/merchants" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
-              {t.merchants}
-            </NavLink>
-            <NavLink to="/delivery" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
-              {t.delivery}
+            <NavLink to="/admin" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
+               Admin Dashboard
             </NavLink>
           </nav>
 
+          {/* Command Actions */}
           <div className="header-actions">
+<<<<<<< HEAD
             {/* Language & Theme toggles restored */}
             <div className="lang-switcher">
               <button className="icon-btn" title="Switch Language">
@@ -71,13 +88,20 @@ const Navigation = () => {
             <div className="action-divider"></div>
 
             <NavLink to="/account" className="btn-primary" style={{ padding: '0.5rem 1rem' }}>{t.signIn}</NavLink>
+=======
+            <button className="icon-btn cart-btn chromatic-shift" onClick={() => setIsCartOpen(true)}>
+              <ShoppingBag size={18} />
+              {cart.length > 0 && <span className="cart-badge">{cart.length}</span>}
+            </button>
+>>>>>>> b3dd1fa (multiple)
           </div>
         </div>
       </header>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="mobile-nav glass">
+      {/* Mobile Orbital HUD */}
+      <nav className="mobile-nav glass slide-in">
         <NavLink to="/" className={({isActive}) => isActive ? 'mobile-nav-item active' : 'mobile-nav-item'}>
+<<<<<<< HEAD
           <Home size={24} />
           <span>{t.home}</span>
         </NavLink>
@@ -98,7 +122,14 @@ const Navigation = () => {
         <NavLink to="/account" className={({isActive}) => isActive ? 'mobile-nav-item active' : 'mobile-nav-item'}>
           <User size={24} />
           <span>Profile</span>
+=======
+          <Home size={22} />
+>>>>>>> b3dd1fa (multiple)
         </NavLink>
+        <button onClick={() => setIsCartOpen(true)} className="mobile-nav-item" style={{background: 'transparent', border: 'none', position: 'relative'}}>
+          <ShoppingBag size={22} />
+          {cart.length > 0 && <span className="cart-badge" style={{position: 'absolute', top: -5, right: -5, padding: '2px 5px', fontSize: '10px'}}>{cart.length}</span>}
+        </button>
       </nav>
     </>
   );

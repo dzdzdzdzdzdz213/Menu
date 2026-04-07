@@ -1,11 +1,16 @@
-import { createClient } from '@supabase/supabase-js';
+// We use a local-storage mock backend to act as our database for the single Seller.
+const LOCAL_STORAGE_KEY = 'menu_products_db';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const getProducts = () => {
+  const data = localStorage.getItem(LOCAL_STORAGE_KEY);
+  return data ? JSON.parse(data) : [];
+};
 
-// Robust initialization to prevent "Black Screen" on invalid env vars
-let supabaseInstance;
+const setProducts = (products) => {
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(products));
+};
 
+<<<<<<< HEAD
 try {
   if (!supabaseUrl || !supabaseAnonKey) {
      console.error('⚠️ CRITICAL STARTUP WARNING ⚠️');
@@ -48,6 +53,72 @@ try {
 } catch (err) {
   console.error('Supabase initialization failed:', err);
   supabaseInstance = { auth: {}, from: () => {} }; // Ultimate fallback
+=======
+// Create some default items if empty
+if (!localStorage.getItem(LOCAL_STORAGE_KEY)) {
+  setProducts([
+    {
+      id: 1,
+      name: "Signature Burger",
+      price: 850,
+      image_url: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800",
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 2,
+      name: "Classic Pizza",
+      price: 1200,
+      image_url: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800",
+      created_at: new Date().toISOString()
+    }
+  ]);
+>>>>>>> b3dd1fa (multiple)
 }
 
-export const supabase = supabaseInstance;
+// Minimal mocked supabase object
+export const supabase = {
+  auth: {
+    getSession: async () => ({ data: { session: null }, error: null }),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+    signInWithOAuth: async () => ({ error: null }),
+    signOut: async () => ({ error: null }),
+  },
+  from: (table) => {
+    if (table === 'products') {
+      return {
+        select: (query) => {
+          return {
+            limit: () => ({ data: getProducts(), error: null }),
+            then: (resolve) => resolve({ data: getProducts(), error: null })
+          };
+        },
+        insert: (item) => {
+          const products = getProducts();
+          const newItem = {
+            id: Date.now(),
+            created_at: new Date().toISOString(),
+            ...(Array.isArray(item) ? item[0] : item)
+          };
+          products.unshift(newItem);
+          setProducts(products);
+          return { error: null }; // Returning pseudo-promise via then if needed, or simple object
+        },
+        delete: () => {
+          // simple delete chain matcher: eq('id', id)
+          return {
+            eq: (field, value) => {
+              if (field === 'id') {
+                const products = getProducts();
+                setProducts(products.filter(p => String(p.id) !== String(value)));
+              }
+              return { error: null };
+            }
+          };
+        }
+      };
+    }
+    return {
+      select: () => ({ limit: () => ({ data: [], error: null }) })
+    };
+  }
+};

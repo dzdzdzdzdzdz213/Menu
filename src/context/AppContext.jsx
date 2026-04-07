@@ -171,6 +171,7 @@ export const AppProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => localStorage.getItem('menu-theme') || 'dark');
   const [country, setCountry] = useState('Algeria');
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
   const [cart, setCart] = useState([]);
   
   // Real Auth State
@@ -246,6 +247,7 @@ export const AppProvider = ({ children }) => {
       country, setCountry, 
       t, 
       isCartOpen, setIsCartOpen, 
+      isProfileDrawerOpen, setIsProfileDrawerOpen,
       cart, addToCart, removeFromCart,
       user, signInWithGoogle, signOut, isLoggingIn
     }}>

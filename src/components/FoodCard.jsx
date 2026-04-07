@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 import React, { useState, useEffect } from 'react';
 import { Heart, Camera, Info, Star, X } from 'lucide-react';
+=======
+import React, { useState } from 'react';
+import { ShoppingBag } from 'lucide-react';
+>>>>>>> b3dd1fa (multiple)
 import { useApp } from '../context/AppContext';
 import { supabase } from '../lib/supabase';
 import ReviewSystem from './ReviewSystem';
@@ -7,6 +12,7 @@ import './FoodCard.css';
 
 const FoodCard = ({ item }) => {
   const { addToCart } = useApp();
+<<<<<<< HEAD
   const { name, brand, price, ingredients, specs, imageUrl, rating } = item;
   const [realRating, setRealRating] = useState(rating || '5.0');
   const [showReviews, setShowReviews] = useState(false);
@@ -24,12 +30,18 @@ const FoodCard = ({ item }) => {
     };
     fetchAvg();
   }, [item.id]);
+=======
+  const [isHovered, setIsHovered] = useState(false);
+>>>>>>> b3dd1fa (multiple)
 
-  const handleAddToCart = () => {
+  const handleOrder = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     addToCart(item);
   };
 
   return (
+<<<<<<< HEAD
     <>
     <div className="food-card glass">
       <div className="food-image-wrapper">
@@ -43,32 +55,38 @@ const FoodCard = ({ item }) => {
         >
           ⭐ {realRating}
         </div>
+=======
+    <div 
+      className="food-card slide-in"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Container */}
+      <div className="food-image-wrapper">
+        <img 
+          src={item.image_url || item.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800'} 
+          alt={item.name} 
+          className="food-image"
+          loading="lazy"
+        />
+>>>>>>> b3dd1fa (multiple)
       </div>
-      
+
+      {/* Info */}
       <div className="food-content">
-        <div className="food-header">
-          <h3 className="food-title">{name}</h3>
-          <span className="food-price text-red">{price} DZD</span>
+        <div className="food-header" style={{ marginBottom: '1rem' }}>
+          <h4 className="food-title">{item.name}</h4>
+          <span className="food-price">
+             {item.price} DZD
+          </span>
         </div>
         
-        <div className="food-brand text-muted">by {brand}</div>
-        
-        <p className="food-ingredients">
-          {ingredients.join(', ')}
-        </p>
-        
-        <div className="food-specs">
-          <Info size={14} className="text-red" />
-          <span>{specs}</span>
-        </div>
-        
-        <div className="food-actions">
-          <button 
-            className="btn-primary flex-btn" 
-            onClick={handleAddToCart}
-          >
-            Add to Cart
+        <div className="cta-grid" style={{ gridTemplateColumns: '1fr' }}>
+          <button className="order-btn" onClick={handleOrder}>
+            <ShoppingBag size={16} style={{ marginRight: 8 }} />
+            Add to Order
           </button>
+<<<<<<< HEAD
           <button 
             className="btn-outline flex-btn"
             onClick={() => setShowReviews(true)}
@@ -76,6 +94,8 @@ const FoodCard = ({ item }) => {
           >
             <MessageSquare size={18} />
           </button>
+=======
+>>>>>>> b3dd1fa (multiple)
         </div>
       </div>
     </div>

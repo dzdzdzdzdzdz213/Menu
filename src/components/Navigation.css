@@ -1,4 +1,7 @@
+/* Navigation — Luminous Restoration: Studio v.30 */
+
 .desktop-header {
+<<<<<<< HEAD
   position: sticky;
   top: 0;
   z-index: 100;
@@ -7,6 +10,25 @@
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--glass-border);
   padding: 1rem 0;
+=======
+  position: fixed;
+  top: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 4rem);
+  max-width: 1400px;
+  z-index: 5000;
+  padding: 0.8rem 2.5rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(40px) saturate(200%);
+  border: 1px solid rgba(0, 0, 0, 0.08); /* Standard Glass Border */
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.05); /* Soft Luminous Shadow */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+>>>>>>> b3dd1fa (multiple)
 }
 
 .header-container {
@@ -16,18 +38,44 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
+}
+
+/* Logo: Luminous Identity */
+.logo-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  transition: all 0.3s;
 }
 
 .logo-text {
+<<<<<<< HEAD
   font-size: 1.8rem;
   font-weight: 900;
   letter-spacing: -0.05em;
   color: var(--color-text);
   margin: 0;
+=======
+  font-size: 1.85rem;
+  font-weight: 1000;
+  letter-spacing: -0.06em;
+  color: #000;
+>>>>>>> b3dd1fa (multiple)
 }
 
+.logo-dot {
+  color: var(--color-red);
+}
+
+.logo-link:hover .logo-text {
+  transform: scale(1.02);
+}
+
+/* Standard Flex Nav - No Displacement */
 .desktop-nav {
   display: flex;
+<<<<<<< HEAD
   gap: 0.5rem;
   align-items: center;
   background: rgba(0, 0, 0, 0.25);
@@ -131,11 +179,59 @@
   border-radius: 50%;
   transition: all 0.2s ease;
   display: flex;
+=======
+>>>>>>> b3dd1fa (multiple)
   align-items: center;
+  gap: 0.5rem;
+  flex: 1;
   justify-content: center;
 }
 
+.nav-item {
+  padding: 0.6rem 1.6rem;
+  font-size: 0.72rem;
+  font-weight: 1000;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--color-text-muted);
+  transition: all 0.3s;
+  border-radius: 12px;
+}
+
+.nav-item:hover {
+  color: #000;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.nav-item.active {
+  background: #000;
+  color: #FFF;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Command Actions */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.icon-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  background: rgba(0,0,0,0.03);
+  border: 1px solid transparent;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
 .icon-btn:hover {
+<<<<<<< HEAD
   background: rgba(255,255,255,0.1);
   transform: translateY(-1px);
 }
@@ -155,30 +251,42 @@
 
 .cart-btn {
   position: relative;
+=======
+  background: #FFF;
+  border-color: #000;
+>>>>>>> b3dd1fa (multiple)
 }
 
 .cart-badge {
   position: absolute;
-  top: -2px;
-  right: -2px;
-  background-color: var(--color-red);
-  color: white;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  background: #000;
+  color: #FFF;
   font-size: 0.7rem;
-  font-weight: 700;
+  font-weight: 1000;
   border-radius: 50%;
-  min-width: 18px;
-  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
+<<<<<<< HEAD
   padding: 2px;
   border: 2px solid var(--color-bg);
+=======
+  border: 2px solid #FFF;
 }
 
-/* Base Mobile Nav Style - Hidden on Desktop */
+/* Mobile HUB HUB - Auto Hide */
+@media (min-width: 1025px) {
+  .mobile-nav { display: none !important; }
+>>>>>>> b3dd1fa (multiple)
+}
+
 .mobile-nav {
-  display: none;
   position: fixed;
+<<<<<<< HEAD
   bottom: 0;
   left: 0;
   right: 0;
@@ -191,9 +299,23 @@
 }
 
 .mobile-nav-item {
+=======
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 3rem);
+  max-width: 400px;
+  height: 70px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(40px) saturate(200%);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 0 2rem;
+  border-radius: 35px;
+>>>>>>> b3dd1fa (multiple)
   display: flex;
-  flex-direction: column;
+  justify-content: space-around;
   align-items: center;
+<<<<<<< HEAD
   gap: 0.5rem;
   color: var(--color-text-muted);
   font-size: 0.75rem;
@@ -222,4 +344,12 @@
   .mobile-nav {
     display: flex;
   }
+=======
+  z-index: 5000;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 1024px) {
+  .desktop-header { display: none; }
+>>>>>>> b3dd1fa (multiple)
 }

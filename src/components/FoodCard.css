@@ -1,21 +1,25 @@
+/* FoodCard — Era 99,999,999,999 Identity & Density */
+
 .food-card {
-  display: flex;
-  flex-direction: column;
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 20px;
   overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  background: linear-gradient(145deg, rgba(20,20,20,0.8), rgba(0,0,0,0.9));
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
 }
 
 .food-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 12px 40px rgba(255, 0, 0, 0.15);
-  border-color: rgba(255, 0, 0, 0.3);
+  border-color: #000000;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
 }
 
 .food-image-wrapper {
   position: relative;
-  width: 100%;
-  padding-top: 75%; /* 4:3 aspect ratio */
+  height: 240px;
+  background: #F1F5F9;
   overflow: hidden;
 }
 
@@ -23,51 +27,16 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.6s;
 }
 
 .food-card:hover .food-image {
-  transform: scale(1.1);
+  transform: scale(1.08);
 }
 
-.like-btn {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: white;
-  transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-}
-
-.like-btn:hover {
-  color: var(--color-red);
-  background: white;
-  transform: scale(1.1);
-}
-
-.rating-badge {
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
-  padding: 0.4rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-}
-
+/* Meta & CTAs */
 .food-content {
   padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
 }
 
 .food-header {
@@ -78,65 +47,91 @@
 }
 
 .food-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 950;
+  color: #000000;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
 .food-price {
   font-size: 1.1rem;
-  font-weight: 800;
+  font-weight: 950;
+  color: var(--color-red);
+  letter-spacing: -0.01em;
 }
 
 .food-brand {
-  font-size: 0.9rem;
-  font-weight: 500;
-  margin-bottom: 1rem;
-}
-
-.food-ingredients {
-  font-size: 0.85rem;
-  color: #ccc;
-  line-height: +1.4;
-  margin-bottom: 1rem;
-  flex-grow: 1;
-}
-
-.food-specs {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
   font-size: 0.8rem;
+  font-weight: 800;
   color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   margin-bottom: 1.5rem;
-  background: rgba(255,0,0,0.05);
-  padding: 0.5rem;
-  border-radius: 6px;
-  border: 1px solid rgba(255,0,0,0.1);
 }
 
-.food-actions {
+.cta-grid {
   display: flex;
   gap: 0.75rem;
 }
 
-.flex-btn {
+.order-btn {
+  flex: 1;
+  padding: 0.85rem;
+  background: #000000;
+  color: #FFFFFF;
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border-radius: 10px;
+  border: none;
+  transition: all 0.3s;
+}
+
+.order-btn:hover {
+  background: var(--color-red);
+  transform: scale(1.02);
+  box-shadow: 0 10px 20px var(--color-red-glow);
+}
+
+.share-btn {
+  width: 44px;
+  height: 44px;
+  background: #F1F5F9;
+  color: var(--color-text-muted);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
 }
 
-.btn-primary.flex-btn {
-  flex-grow: 1;
+.share-btn:hover {
+  color: #000000;
+  border-color: #000000;
+  background: #FFFFFF;
 }
 
-.insta-btn {
-  padding: 0 1rem;
-  color: #E1306C; /* Instagram aesthetic color override if needed, but styling stays inline with our theme by default */
-  border-color: rgba(255,255,255, 0.15);
+/* Card HUD */
+.card-hud {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  z-index: 10;
 }
 
-.insta-btn:hover {
-  background: rgba(225, 48, 108, 0.1);
-  border-color: #E1306C;
+.hud-item {
+  font-size: 0.65rem;
+  font-weight: 900;
+  padding: 0.35rem 0.8rem;
+  background: #FFFFFF;
+  border: 1px solid #000;
+  color: #000;
+  text-transform: uppercase;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }

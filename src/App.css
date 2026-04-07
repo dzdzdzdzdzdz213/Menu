@@ -1,10 +1,68 @@
+/* App Wrapper */
 .app-wrapper {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  position: relative;
 }
 
 main {
   flex: 1;
-  padding-top: 2rem;
+  padding-top: 1.5rem;
+}
+
+/* Extra floating orb for richer depth */
+.app-wrapper::before {
+  content: '';
+  position: fixed;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50vw;
+  height: 50vh;
+  background: radial-gradient(ellipse, rgba(0,229,255,0.03) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  animation: orb-drift-1 28s ease-in-out infinite alternate;
+}
+
+/* Section label utility (shared) */
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(255,23,68,0.07);
+  border: 1px solid rgba(255,23,68,0.2);
+  color: var(--color-red);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.3rem 0.85rem;
+  border-radius: 20px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(124,58,237,0.3);
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(124,58,237,0.5);
+}
+
+/* Global selection color */
+::selection {
+  background: rgba(124,58,237,0.35);
+  color: var(--color-text);
 }
