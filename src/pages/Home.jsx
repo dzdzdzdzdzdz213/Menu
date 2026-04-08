@@ -53,6 +53,37 @@ const Home = () => {
           </div>
         )}
       </section>
+
+      {/* Location Section */}
+      <section className="location-section slide-in" style={{ paddingBottom: '8rem' }}>
+        <div className="section-header">
+          <h2 className="title-md">Find <span className="gradient-text">Us</span></h2>
+          <p className="text-muted">Visit our restaurant and enjoy the best culinary experience.</p>
+        </div>
+        
+        <div className="map-container glass">
+          <iframe 
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m13!1m3!1d102375.98971448208!2d2.9691461466085564!3d36.702081491757365!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x128faf30a6c0f3c5%3A0x6b2e7745ef3f6e81!2sAlgiers%2C%20Algeria!5e0!3m2!1sen!2sdz!4v1712496000000!5m2!1sen!2sdz" 
+            width="100%" 
+            height="450" 
+            style={{ border: 0, borderRadius: '24px' }} 
+            allowFullScreen="" 
+            loading="lazy" 
+            referrerPolicy="no-referrer-when-downgrade"
+          ></iframe>
+          
+          <div className="location-info">
+            <div className="info-card glass">
+              <h4>Address</h4>
+              <p>123 Gourmet Street, Algiers, Algeria</p>
+            </div>
+            <div className="info-card glass">
+              <h4>Hours</h4>
+              <p>Mon - Sun: 10:00 AM - 11:00 PM</p>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };
