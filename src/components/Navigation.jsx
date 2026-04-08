@@ -1,11 +1,18 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { Home, ShoppingBag } from 'lucide-react';
+import React, { useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { Home, ShoppingBag, ChevronDown, User, Star, UtensilsCrossed } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import './Navigation.css';
 
 const Navigation = () => {
   const { cart, setIsCartOpen } = useApp();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleCategoryClick = (category) => {
+    setIsMenuOpen(false);
+    navigate(`/search?category=${encodeURIComponent(category)}`);
+  };
 
   return (
     <>
@@ -18,9 +25,39 @@ const Navigation = () => {
 
           {/* Universal Nav Links */}
           <nav className="desktop-nav">
-            <NavLink to="/" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
-               Menu
-            </NavLink>
+            <div 
+              className="nav-dropdown-container"
+              onMouseEnter={() => setIsMenuOpen(true)}
+              onMouseLeave={() => setIsMenuOpen(false)}
+            >
+              <button className="nav-item nav-dropdown-trigger" onClick={() => navigate('/')}>
+                Menu <ChevronDown size={14} style={{ marginLeft: 4 }} />
+              </button>
+              
+              {isMenuOpen && (
+                <div className="nav-dropdown-menu glass slide-in" style={{ animationDuration: '0.2s' }}>
+                  <div className="dropdown-section">
+                    <h4>Account</h4>
+                    <button onClick={() => navigate('/admin')}><User size={14} /> My Profile</button>
+                  </div>
+                  <div className="dropdown-divider"></div>
+                  <div className="dropdown-section">
+                    <h4>Cuisine Categories</h4>
+                    <button onClick={() => handleCategoryClick('Sweets')}><UtensilsCrossed size={14} /> Sweets & Desserts</button>
+                    <button onClick={() => handleCategoryClick('Traditional Sweets')}><UtensilsCrossed size={14} /> Traditional Sweets</button>
+                    <button onClick={() => handleCategoryClick('Japanese')}><UtensilsCrossed size={14} /> Japanese</button>
+                    <button onClick={() => handleCategoryClick('Chinese')}><UtensilsCrossed size={14} /> Chinese</button>
+                    <button onClick={() => handleCategoryClick('Traditional Restaurants')}><UtensilsCrossed size={14} /> Traditional Restaurants</button>
+                  </div>
+                  <div className="dropdown-divider"></div>
+                  <div className="dropdown-section">
+                    <button onClick={() => { setIsMenuOpen(false); navigate('/'); }} style={{ color: 'var(--color-primary)', fontWeight: 'bold' }}>
+                      <Star size={14} /> Browse Top Restaurants
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             <NavLink to="/admin" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
                Admin Dashboard
             </NavLink>

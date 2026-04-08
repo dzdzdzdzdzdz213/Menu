@@ -28,6 +28,10 @@ const FoodCard = ({ product }) => {
             {product.price} DZD
           </span>
         </div>
+        
+        {product.specs && (
+          <p className="item-description text-muted">{product.specs}</p>
+        )}
 
         <div className="card-actions" style={{ marginTop: '1.5rem' }}>
           <button 

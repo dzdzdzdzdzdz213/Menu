@@ -70,6 +70,24 @@
   margin-bottom: 1.5rem;
 }
 
+.card-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.item-description {
+  font-size: 0.85rem;
+  line-height: 1.4;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: var(--color-text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .cta-grid {
   display: flex;
   gap: 0.75rem;

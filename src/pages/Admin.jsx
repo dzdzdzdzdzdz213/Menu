@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, ImagePlus, Plus, Loader2 } from 'lucide-react';
+import { Trash2, ImagePlus, Plus, Loader2, Clock, Save } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../context/ToastContext';
 import './Admin.css';
@@ -12,7 +12,35 @@ const Admin = () => {
   
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
+  const [category, setCategory] = useState('');
+  const [description, setDescription] = useState('');
   const [imageBase64, setImageBase64] = useState('');
+
+  const [businessHours, setBusinessHours] = useState(() => {
+    const saved = localStorage.getItem('admin_business_hours');
+    if (saved) return JSON.parse(saved);
+    return {
+      Monday: { open: '09:00', close: '22:00', closed: false },
+      Tuesday: { open: '09:00', close: '22:00', closed: false },
+      Wednesday: { open: '09:00', close: '22:00', closed: false },
+      Thursday: { open: '09:00', close: '22:00', closed: false },
+      Friday: { open: '14:00', close: '23:00', closed: false },
+      Saturday: { open: '10:00', close: '23:00', closed: false },
+      Sunday: { open: '10:00', close: '23:00', closed: false }
+    };
+  });
+
+  const handleHoursChange = (day, field, value) => {
+    setBusinessHours(prev => ({
+      ...prev,
+      [day]: { ...prev[day], [field]: value }
+    }));
+  };
+
+  const saveBusinessHours = () => {
+    localStorage.setItem('admin_business_hours', JSON.stringify(businessHours));
+    addToast('Business hours saved successfully!', 'success');
+  };
 
   const fetchProducts = async () => {
     setIsLoading(true);
@@ -44,7 +72,7 @@ const Admin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name || !price || !imageBase64) {
-      addToast('Please fill all fields and upload an image', 'error');
+      addToast('Please fill all required fields and upload an image', 'error');
       return;
     }
     
@@ -53,11 +81,15 @@ const Admin = () => {
       await supabase.from('products').insert([{ 
         name, 
         price: Number(price), 
+        category,
+        specs: description,
         image_url: imageBase64 
       }]);
       addToast('Item added successfully!', 'success');
       setName('');
       setPrice('');
+      setCategory('');
+      setDescription('');
       setImageBase64('');
       fetchProducts();
     } catch (err) {
@@ -110,6 +142,39 @@ const Admin = () => {
               />
             </div>
             <div className="form-group">
+              <label>Item Category</label>
+              <input 
+                type="text" 
+                value={category}
+                onChange={e => setCategory(e.target.value)}
+                placeholder="e.g., Traditional Sweets" 
+                list="category-suggestions"
+                className="base-input"
+              />
+              <datalist id="category-suggestions">
+                <option value="Sweets" />
+                <option value="Traditional Sweets" />
+                <option value="Pizza" />
+                <option value="Sandwiches" />
+                <option value="Drinks" />
+                <option value="Fast Food" />
+                <option value="Healthy" />
+                <option value="Japanese" />
+                <option value="Chinese" />
+              </datalist>
+            </div>
+            <div className="form-group">
+              <label>Item Description / Ingredients</label>
+              <textarea 
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="e.g., Made with organic tomatoes..." 
+                className="base-input"
+                rows="3"
+                style={{ resize: 'vertical' }}
+              />
+            </div>
+            <div className="form-group">
               <label>Item Photo</label>
               <label className="image-upload-box clickable">
                 <input type="file" accept="image/*" onChange={handleImageChange} hidden />
@@ -141,14 +206,22 @@ const Admin = () => {
             <div className="admin-items-list">
               {products.map(item => (
                 <div key={item.id} className="admin-item">
-                  <img src={item.image_url} alt={item.name} className="admin-item-img" />
-                  <div className="admin-item-info">
-                    <h4>{item.name}</h4>
-                    <span className="price">{item.price} DZD</span>
+                  <div className="admin-item-image-wrapper">
+                    <img src={item.image_url} alt={item.name} className="admin-item-img" />
+                    <button type="button" className="btn-icon delete-btn text-red" onClick={() => handleDelete(item.id)}>
+                      <Trash2 size={18} />
+                    </button>
                   </div>
-                  <button type="button" className="btn-icon text-red" onClick={() => handleDelete(item.id)}>
-                    <Trash2 size={18} />
-                  </button>
+                  <div className="admin-item-content">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                       <h4 style={{ margin: 0, fontSize: '1.2rem' }}>{item.name}</h4>
+                       <span className="price text-red" style={{ fontWeight: 'bold' }}>{item.price} DZD</span>
+                    </div>
+                    {item.specs && <p className="admin-item-desc text-muted">{item.specs}</p>}
+                    <div className="admin-item-meta" style={{ marginTop: 'auto', paddingTop: '1rem' }}>
+                      {item.category && <span className="cat-badge">{item.category}</span>}
+                    </div>
+                  </div>
                 </div>
               ))}
               {products.length === 0 && (
@@ -156,6 +229,74 @@ const Admin = () => {
               )}
             </div>
           )}
+        </div>
+        {/* BUSINESS HOURS SECTION */}
+        <div className="admin-card glass" style={{ marginTop: '2rem', gridColumn: '1 / -1' }}>
+          <div className="dash-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <h3 className="title-md" style={{ fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                 <Clock className="text-red" /> Business Hours
+              </h3>
+              <p className="text-muted" style={{ marginTop: '0.5rem' }}>Set your weekly opening and closing schedules so customers know when to order.</p>
+            </div>
+            <button className="btn-primary" onClick={saveBusinessHours}>
+              <Save size={16} style={{ marginRight: 8 }} /> Save Schedule
+            </button>
+          </div>
+          
+          <div className="hours-table-container">
+            <table className="hours-table w-100">
+              <thead>
+                <tr>
+                  <th>Day</th>
+                  <th>Status</th>
+                  <th>Opening Time</th>
+                  <th>Closing Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(businessHours).map(([day, schedule]) => (
+                  <tr key={day} className={schedule.closed ? 'closed-day' : ''}>
+                    <td className="day-name font-semibold">{day}</td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <label className="toggle-switch">
+                          <input 
+                            type="checkbox" 
+                            checked={!schedule.closed} 
+                            onChange={(e) => handleHoursChange(day, 'closed', !e.target.checked)} 
+                            hidden
+                          />
+                          <div className={`mock-toggle ${!schedule.closed ? 'active' : ''}`}></div>
+                        </label>
+                        <span className="status-text">{schedule.closed ? 'Closed' : 'Open'}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <input 
+                        type="time" 
+                        value={schedule.open} 
+                        onChange={(e) => handleHoursChange(day, 'open', e.target.value)} 
+                        disabled={schedule.closed}
+                        className="base-input time-input"
+                        style={{ padding: '0.4rem', borderRadius: '8px' }}
+                      />
+                    </td>
+                    <td>
+                      <input 
+                        type="time" 
+                        value={schedule.close} 
+                        onChange={(e) => handleHoursChange(day, 'close', e.target.value)} 
+                        disabled={schedule.closed}
+                        className="base-input time-input"
+                        style={{ padding: '0.4rem', borderRadius: '8px' }}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

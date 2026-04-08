@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Search as SearchIcon, TrendingUp, Loader2, Map as MapIcon, List, MapPin, SearchX } from 'lucide-react';
 import FoodCard from '../components/FoodCard';
 import { FoodCardSkeleton } from '../components/Skeletons';
@@ -8,12 +9,17 @@ import { useApp } from '../context/AppContext';
 import { useSEO } from '../hooks/useSEO';
 import './Home.css';
 
-const CATEGORIES = ['All', 'Restaurants', 'Hotels', 'Experiences', 'Attractions'];
+const CATEGORIES = ['All', 'Restaurants', 'Hotels', 'Experiences', 'Attractions', 'Traditional Sweets', 'Japanese', 'Chinese', 'Traditional Restaurants'];
 
 const Search = () => {
   const { t, country } = useApp();
+  const location = useLocation();
+  
+  const queryParams = new URLSearchParams(location.search);
+  const initialCategory = queryParams.get('category') || 'All';
+  
   const [query, setQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState('All');
+  const [activeCategory, setActiveCategory] = useState(CATEGORIES.includes(initialCategory) ? initialCategory : 'All');
   const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'map'

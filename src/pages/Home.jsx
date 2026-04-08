@@ -1,16 +1,37 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import FoodCard from '../components/FoodCard';
 import { supabase } from '../lib/supabase';
-import { Loader2, Utensils } from 'lucide-react';
+import { Loader2, Utensils, Users } from 'lucide-react';
 import './Home.css';
 
 const Home = () => {
   const [items, setItems] = useState([]);
+  const [merchants, setMerchants] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchItems();
+    fetchMerchants();
   }, []);
+
+  const fetchMerchants = async () => {
+    try {
+      const { data } = await supabase.from('profiles').select().eq('role', 'merchant');
+      if (!data || data.length === 0) {
+        setMerchants([
+           { id: '1', full_name: 'Premium Local Spot' },
+           { id: '2', full_name: 'Tokyo Bites' },
+           { id: '3', full_name: 'La Trattoria' }
+        ]);
+      } else {
+        setMerchants(data);
+      }
+    } catch(err) {
+      console.error(err);
+    }
+  };
 
   const fetchItems = async () => {
     setIsLoading(true);
@@ -52,6 +73,25 @@ const Home = () => {
             ))}
           </div>
         )}
+      </section>
+
+      {/* Top Rated Restaurants */}
+      <section className="merchants-section slide-in" style={{ paddingBottom: '4rem' }}>
+        <div className="section-header">
+          <h2 className="title-md">Top Rated <span className="gradient-text">Restaurants</span></h2>
+          <p className="text-muted">Browse all available businesses in our platform.</p>
+        </div>
+        <div className="merchants-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem', marginTop: '2rem' }}>
+          {merchants.map(m => (
+            <div key={m.id} className="merchant-card glass" onClick={() => navigate(`/restaurant/${m.id}`)} style={{ padding: '1.5rem', borderRadius: '16px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', transition: 'all 0.3s' }}>
+              <div className="merchant-avatar" style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-red), #ff7b7b)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
+                 <Users size={32} color="white" />
+              </div>
+              <h3 style={{ margin: 0, fontSize: '1.2rem' }}>{m.full_name || 'Partner Restaurant'}</h3>
+              <p className="text-muted" style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>View Menu & Order</p>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* Location Section */}
