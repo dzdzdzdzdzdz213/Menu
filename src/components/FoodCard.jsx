@@ -1,7 +1,7 @@
 import React from 'react';
 import { ShoppingBag } from 'lucide-react';
-import { useApp } from '../context/AppContext';
-import { useToast } from '../context/ToastContext';
+import { useApp } from '../hooks/useApp';
+import { useToast } from '../hooks/useToast';
 import './FoodCard.css';
 
 const FoodCard = ({ product }) => {

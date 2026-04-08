@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User, ShieldCheck, Mail, Lock } from 'lucide-react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../hooks/useApp';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import { useSEO } from '../hooks/useSEO';
@@ -51,7 +51,7 @@ const Account = () => {
     if (!validate()) return;
     
     setIsLoading(true);
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data: _data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });

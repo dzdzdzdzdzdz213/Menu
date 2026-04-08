@@ -5,14 +5,14 @@ import FoodCard from '../components/FoodCard';
 import { FoodCardSkeleton } from '../components/Skeletons';
 import EmptyState from '../components/EmptyState';
 import { supabase } from '../lib/supabase';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../hooks/useApp';
 import { useSEO } from '../hooks/useSEO';
 import './Home.css';
 
 const CATEGORIES = ['All', 'Restaurants', 'Hotels', 'Experiences', 'Attractions', 'Traditional Sweets', 'Japanese', 'Chinese', 'Traditional Restaurants'];
 
 const Search = () => {
-  const { t, country } = useApp();
+  const { country } = useApp();
   const location = useLocation();
   
   const queryParams = new URLSearchParams(location.search);

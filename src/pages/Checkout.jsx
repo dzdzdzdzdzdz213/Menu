@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { CreditCard, CheckCircle2, ChevronLeft, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../hooks/useApp';
 import EmptyState from '../components/EmptyState';
 import toast from 'react-hot-toast';
 import { useSEO } from '../hooks/useSEO';

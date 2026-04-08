@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../hooks/useApp';
 import './Footer.css';
 
 const COUNTRIES = ['Algeria', 'Morocco', 'Tunisia', 'Gulf Countries', 'Europe'];
@@ -11,7 +11,7 @@ const LANGUAGES = [
 ];
 
 const Footer = () => {
-  const { t, lang, setLang, country, setCountry } = useApp();
+  const { t } = useApp();
 
   return (
     <footer className="footer glass">

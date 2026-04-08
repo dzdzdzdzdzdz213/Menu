@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Trash2, ShoppingBag, Loader2, CheckCircle } from 'lucide-react';
-import { useApp } from '../context/AppContext';
-import { useToast } from '../context/ToastContext';
+import { useApp } from '../hooks/useApp';
+import { useToast } from '../hooks/useToast';
 import './CartDrawer.css';
 
 const CartDrawer = () => {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Camera, Image as ImageIcon, Upload, CheckCircle2, Loader2, Plus, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../hooks/useApp';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import { useSEO } from '../hooks/useSEO';

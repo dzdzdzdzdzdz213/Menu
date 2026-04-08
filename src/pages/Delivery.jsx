@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Bike, ShieldCheck, Map, DollarSign, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../hooks/useApp';
 import './Delivery.css';
 
 const Delivery = () => {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Star, MessageSquare, Camera, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../hooks/useApp';
 import toast from 'react-hot-toast';
 
 const ReviewSystem = ({ entityId, type = 'merchant', initialReviews = [] }) => {

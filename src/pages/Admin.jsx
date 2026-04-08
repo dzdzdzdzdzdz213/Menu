@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2, ImagePlus, Plus, Loader2, Clock, Save } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { useToast } from '../context/ToastContext';
+import { useToast } from '../hooks/useToast';
 import './Admin.css';
 
 const Admin = () => {
@@ -92,7 +92,7 @@ const Admin = () => {
       setDescription('');
       setImageBase64('');
       fetchProducts();
-    } catch (err) {
+    } catch {
       addToast('Failed to add item. Maybe image is too large.', 'error');
     } finally {
       setIsSubmitting(false);
@@ -104,7 +104,7 @@ const Admin = () => {
       await supabase.from('products').delete().eq('id', id);
       addToast('Item deleted!', 'info');
       fetchProducts();
-    } catch (err) {
+    } catch {
       addToast('Failed to delete item', 'error');
     }
   };

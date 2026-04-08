@@ -1,12 +1,12 @@
 import React from 'react';
 import { Clock } from 'lucide-react';
 
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import EmptyState from '../components/EmptyState';
 import { useSEO } from '../hooks/useSEO';
 
 const OrderHistory = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   useSEO({
     title: 'Order History',

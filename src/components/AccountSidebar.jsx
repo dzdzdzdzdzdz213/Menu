@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { X, User, Grid, Star, LogOut, MessageSquare, ChevronLeft, ArrowRight } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+// import { useApp } from '../hooks/useApp';
 import QRCodeGenerator from './QRCodeGenerator';
 import './AccountSidebar.css';
 
 const CATEGORIES = ['Restaurants', 'Hotels', 'Experiences', 'Attractions', 'Cafes', 'Sweets'];
 
 const AccountSidebar = ({ isOpen, onClose }) => {
-  const { t } = useApp();
+  // const {  } = useApp();
   const [view, setView] = useState('main'); // 'main', 'categories', 'top100'
 
   if (!isOpen) return null;

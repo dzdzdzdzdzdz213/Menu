@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+// import { createClient } from '@supabase/supabase-js';
 
 const MOCK_STORAGE_KEY = 'menu_products_db';
 

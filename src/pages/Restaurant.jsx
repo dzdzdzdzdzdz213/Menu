@@ -7,13 +7,13 @@ import EmptyState from '../components/EmptyState';
 import ReviewSystem from '../components/ReviewSystem';
 import BookingEngine from '../components/BookingEngine';
 import { supabase } from '../lib/supabase';
-import { useApp } from '../context/AppContext';
+// import { useApp } from '../hooks/useApp';
 import { useSEO } from '../hooks/useSEO';
 import './Restaurant.css';
 
 const Restaurant = () => {
   const { id } = useParams();
-  const { t } = useApp();
+  // const {  } = useApp();
   const [merchant, setMerchant] = useState(null);
   const [foods, setFoods] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,7 +31,7 @@ const Restaurant = () => {
         let heroImage = localSettings.heroImage || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1200&auto=format&fit=crop";
         let restaurantName = localSettings.name || "Premium Local Spot";
         
-        const { data, error } = await supabase
+        const { data, _error } = await supabase
           .from('products')
           .select('*')
           .eq('merchant_id', id);

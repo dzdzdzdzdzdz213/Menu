@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Home, ShoppingBag, ChevronDown, User, Star, UtensilsCrossed } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../hooks/useApp';
 import './Navigation.css';
 
 const Navigation = () => {
