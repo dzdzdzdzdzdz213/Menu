@@ -80,7 +80,7 @@ const Admin = () => {
   return (
     <div className="admin-page container">
       <div className="admin-header">
-        <h2 className="title-lg">Restaurant <span className="gradient-text">Menu Dashboard</span></h2>
+        <h2 className="title-lg">Menu <span className="gradient-text">Dashboard</span></h2>
         <p className="text-muted">Easily add or remove items from your public menu.</p>
       </div>
 

@@ -13,7 +13,7 @@ const Navigation = () => {
         <div className="header-container">
           {/* Logo */}
           <NavLink to="/" className="logo-link">
-            <h1 className="logo-text">Restaurant<span className="logo-dot">.</span></h1>
+            <h1 className="logo-text">Menu<span className="logo-dot">.</span></h1>
           </NavLink>
 
           {/* Universal Nav Links */}
