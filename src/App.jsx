@@ -6,6 +6,14 @@ import Navigation from './components/Navigation';
 import CartDrawer from './components/CartDrawer';
 import Home from './pages/Home';
 import Admin from './pages/Admin';
+import Account from './pages/Account';
+import Checkout from './pages/Checkout';
+import Delivery from './pages/Delivery';
+import Merchants from './pages/Merchants';
+import OrderHistory from './pages/OrderHistory';
+import Restaurant from './pages/Restaurant';
+import Search from './pages/Search';
+import NotFound from './pages/NotFound';
 import './App.css';
 
 function AppInner() {
@@ -18,7 +26,14 @@ function AppInner() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/admin" element={<Admin />} />
-            <Route path="*" element={<Home />} />
+            <Route path="/account" element={<Account />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/delivery" element={<Delivery />} />
+            <Route path="/merchants" element={<Merchants />} />
+            <Route path="/history" element={<OrderHistory />} />
+            <Route path="/restaurant/:id" element={<Restaurant />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
       </div>
