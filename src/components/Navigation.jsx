@@ -6,7 +6,7 @@ import i18n from '../lib/i18n';
 import './Navigation.css';
 
 const Navigation = () => {
-  const { cart, setIsCartOpen, user, signOut } = useApp();
+  const { cart, setIsCartOpen, user, userProfile, signOut } = useApp();
   const [isPortalOpen, setIsPortalOpen] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
   const navigate = useNavigate();
@@ -26,10 +26,16 @@ const Navigation = () => {
   };
 
   const PORTALS = [
-    { icon: User,   label: 'Customer Portal', sub: 'Orders & profile',      path: '/account',   color: 'rgba(255,255,255,0.9)' },
-    { icon: Store,  label: 'Merchant Portal', sub: 'Manage restaurant',     path: '/merchants', color: '#ff9100' },
-    { icon: Shield, label: 'Admin Portal',    sub: 'Platform management',   path: '/admin',     color: '#ff3333' },
+    { icon: User,   label: 'Profile Settings', sub: 'Orders & profile',      path: '/account',   color: 'rgba(255,255,255,0.9)' },
   ];
+
+  if (userProfile?.role === 'seller') {
+    PORTALS.push({ icon: Store,  label: 'Shop Dashboard', sub: 'Manage restaurant',     path: '/seller-dashboard', color: '#ff9100' });
+  }
+
+  if (userProfile?.role === 'admin') {
+    PORTALS.push({ icon: Shield, label: 'Admin Terminal',    sub: 'Platform management',   path: '/admin',     color: '#ff3333' });
+  }
 
   const LANGS = [
     { code: 'en', label: '🇬🇧 EN' },

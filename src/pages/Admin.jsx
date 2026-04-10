@@ -1,338 +1,234 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, ImagePlus, Plus, Loader2, Clock, Save } from 'lucide-react';
+import { useApp } from '../hooks/useApp';
 import { supabase } from '../lib/supabase';
-import { useToast } from '../hooks/useToast';
+import { 
+  Users, 
+  Store, 
+  TrendingUp, 
+  Trash2, 
+  BarChart3, 
+  ShieldAlert,
+  Loader2,
+  Phone,
+  Calendar,
+  Search
+} from 'lucide-react';
+import toast from 'react-hot-toast';
 import './Admin.css';
 
 const Admin = () => {
-  const { addToast } = useToast();
-  const [products, setProducts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const [name, setName] = useState('');
-  const [price, setPrice] = useState('');
-  const [category, setCategory] = useState('');
-  const [description, setDescription] = useState('');
-  const [imageBase64, setImageBase64] = useState('');
-
-  const [businessHours, setBusinessHours] = useState(() => {
-    const saved = localStorage.getItem('admin_business_hours');
-    if (saved) return JSON.parse(saved);
-    return {
-      Monday: { open: '09:00', close: '22:00', closed: false },
-      Tuesday: { open: '09:00', close: '22:00', closed: false },
-      Wednesday: { open: '09:00', close: '22:00', closed: false },
-      Thursday: { open: '09:00', close: '22:00', closed: false },
-      Friday: { open: '14:00', close: '23:00', closed: false },
-      Saturday: { open: '10:00', close: '23:00', closed: false },
-      Sunday: { open: '10:00', close: '23:00', closed: false }
-    };
-  });
-
-  const handleHoursChange = (day, field, value) => {
-    setBusinessHours(prev => ({
-      ...prev,
-      [day]: { ...prev[day], [field]: value }
-    }));
-  };
-
-  const saveBusinessHours = () => {
-    localStorage.setItem('admin_business_hours', JSON.stringify(businessHours));
-    addToast('Business hours saved successfully!', 'success');
-  };
-
-  const fetchProducts = async () => {
-    setIsLoading(true);
-    try {
-      const { data: dbData } = await supabase.from('products').select();
-      
-      // Pull all local inventories if any
-      const allLocal = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key.startsWith('merchant_inventory_')) {
-          allLocal.push(...JSON.parse(localStorage.getItem(key)));
-        }
-      }
-      
-      setProducts([...(dbData || []), ...allLocal]);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { user, userProfile } = useApp();
+  const [activeTab, setActiveTab] = useState('overview');
+  const [users, setUsers] = useState([]);
+  const [analytics, setAnalytics] = useState([]);
+  const [merchants, setMerchants] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImageBase64(reader.result);
-      };
-      reader.readAsDataURL(file);
+    if (userProfile?.role === 'admin') {
+      fetchAdminData();
     }
-  };
+  }, [userProfile]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!name || !price || !imageBase64) {
-      addToast('Please fill all required fields', 'error');
-      return;
-    }
-    
-    setIsSubmitting(true);
+  const fetchAdminData = async () => {
+    setLoading(true);
     try {
-      // For Admin, we mock add to a global pool for now
-      const newItemObj = {
-        id: 'admin-' + Date.now(),
-        name,
-        price: Number(price),
-        category,
-        specs: description,
-        image_url: imageBase64,
-        merchant_id: 'admin'
-      };
+      // 1. Fetch Users & Sellers
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      const adminInv = JSON.parse(localStorage.getItem('merchant_inventory_admin') || '[]');
-      localStorage.setItem('merchant_inventory_admin', JSON.stringify([newItemObj, ...adminInv]));
+      setUsers(profiles || []);
+      setMerchants(profiles?.filter(p => p.role === 'seller') || []);
+
+      // 2. Fetch Analytics
+      const { data: stats } = await supabase
+        .from('analytics')
+        .select(`
+          *,
+          profiles:seller_id (full_name)
+        `)
+        .order('created_at', { ascending: false });
       
-      addToast('Platform delicacy added!', 'success');
-      setName('');
-      setPrice('');
-      setCategory('');
-      setDescription('');
-      setImageBase64('');
-      fetchProducts();
-    } catch {
-      addToast('Failed to add item.', 'error');
+      setAnalytics(stats || []);
+
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to load admin data');
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Erase this item platform-wide?')) return;
-    
+  const handleDeleteUser = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this user? This is irreversible.')) return;
     try {
-      if (String(id).startsWith('admin-')) {
-         const inv = JSON.parse(localStorage.getItem('merchant_inventory_admin') || '[]');
-         localStorage.setItem('merchant_inventory_admin', JSON.stringify(inv.filter(i => i.id !== id)));
-      } else if (String(id).startsWith('local-')) {
-         // Loop through all merchants to find and delete
-         for (let i = 0; i < localStorage.length; i++) {
-           const key = localStorage.key(i);
-           if (key.startsWith('merchant_inventory_')) {
-             const inv = JSON.parse(localStorage.getItem(key));
-             localStorage.setItem(key, JSON.stringify(inv.filter(i => i.id !== id)));
-           }
-         }
-      } else {
-         await supabase.from('products').delete().eq('id', id);
-      }
-      
-      addToast('Item removed from platform.', 'info');
-      fetchProducts();
-    } catch {
-      addToast('Failed to delete item', 'error');
+      // Note: Real deletion usually happens via Supabase Auth Admin API, 
+      // but here we mark as inactive OR delete from public.profiles.
+      const { error } = await supabase.from('profiles').delete().eq('id', id);
+      if (error) throw error;
+      toast.success('User deleted');
+      fetchAdminData();
+    } catch (err) {
+      toast.error(err.message);
     }
   };
+
+  const getBestSellers = () => {
+    const counts = {};
+    analytics.forEach(a => {
+      const name = a.profiles?.full_name || 'Unknown';
+      counts[name] = (counts[name] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+  };
+
+  const getTrafficByHour = () => {
+    const hours = Array(24).fill(0);
+    analytics.forEach(a => {
+      const hour = new Date(a.created_at).getHours();
+      hours[hour]++;
+    });
+    return hours;
+  };
+
+  if (userProfile?.role !== 'admin') {
+    return (
+      <div className="container" style={{ paddingTop: '10rem', textAlign: 'center' }}>
+        <ShieldAlert size={64} className="text-red" style={{ marginBottom: '1rem' }} />
+        <h2>Access Denied</h2>
+        <p className="text-muted">You do not have administrative privileges.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="admin-page container">
+    <div className="admin-page container" style={{ paddingTop: '8rem' }}>
       <div className="admin-header">
-        <h2 className="title-lg">Central Admin <span className="gradient-text">Dashboard</span></h2>
-        <p className="text-muted">You have ALL ACCESS. Easily manage all items from all merchants on the platform.</p>
+        <h2 className="title-lg">Site <span className="gradient-text">Administration</span></h2>
+        <p className="text-muted">Total Control. Monitoring {users.length} users and {merchants.length} active sellers.</p>
       </div>
 
-      <div className="admin-grid">
-        {/* ADD ITEM FORM */}
-        <div className="admin-card glass">
-          <h3 className="title-md" style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Add New Item</h3>
-          <form onSubmit={handleSubmit} className="admin-form">
-            <div className="form-group">
-              <label>Item Name</label>
-              <input 
-                type="text" 
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="e.g., Signature Burger" 
-                className="base-input"
-              />
-            </div>
-            <div className="form-group">
-              <label>Price (DZD)</label>
-              <input 
-                type="number" 
-                value={price}
-                onChange={e => setPrice(e.target.value)}
-                placeholder="e.g., 850" 
-                className="base-input"
-              />
-            </div>
-            <div className="form-group">
-              <label>Item Category</label>
-              <input 
-                type="text" 
-                value={category}
-                onChange={e => setCategory(e.target.value)}
-                placeholder="e.g., Traditional Sweets" 
-                list="category-suggestions"
-                className="base-input"
-              />
-              <datalist id="category-suggestions">
-                <option value="Sweets" />
-                <option value="Traditional Sweets" />
-                <option value="Pizza" />
-                <option value="Sandwiches" />
-                <option value="Drinks" />
-                <option value="Fast Food" />
-                <option value="Healthy" />
-                <option value="Japanese" />
-                <option value="Chinese" />
-              </datalist>
-            </div>
-            <div className="form-group">
-              <label>Item Description / Ingredients</label>
-              <textarea 
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-                placeholder="e.g., Made with organic tomatoes..." 
-                className="base-input"
-                rows="3"
-                style={{ resize: 'vertical' }}
-              />
-            </div>
-            <div className="form-group">
-              <label>Item Photo</label>
-              <label className="image-upload-box clickable">
-                <input type="file" accept="image/*" onChange={handleImageChange} hidden />
-                {imageBase64 ? (
-                  <img src={imageBase64} alt="Preview" className="image-preview" />
-                ) : (
-                  <div className="upload-placeholder text-muted">
-                    <ImagePlus size={32} style={{ marginBottom: 8 }} />
-                    <p>Click to upload photo</p>
-                  </div>
-                )}
-              </label>
-            </div>
-            <button type="submit" className="btn-primary w-100" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="animate-spin" /> : <><Plus size={18} style={{ marginRight: 8 }} /> Add Item</>}
-            </button>
-          </form>
-        </div>
+      <div className="profile-tabs glass" style={{ marginBottom: '2rem' }}>
+        <button onClick={() => setActiveTab('overview')} className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}>Overview</button>
+        <button onClick={() => setActiveTab('users')} className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}>User Management</button>
+        <button onClick={() => setActiveTab('traffic')} className={`tab-btn ${activeTab === 'traffic' ? 'active' : ''}`}>Traffic Data</button>
+      </div>
 
-        {/* ITEMS LIST */}
-        <div className="admin-card glass">
-          <h3 className="title-md" style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Your Menu ({products.length})</h3>
-          
-          {isLoading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
-              <Loader2 className="animate-spin gradient-text" size={32} />
-            </div>
-          ) : (
-            <div className="admin-items-list">
-              {products.map(item => (
-                <div key={item.id} className="admin-item">
-                  <div className="admin-item-image-wrapper">
-                    <img src={item.image_url} alt={item.name} className="admin-item-img" />
-                    <button type="button" className="btn-icon delete-btn text-red" onClick={() => handleDelete(item.id)}>
-                      <Trash2 size={18} />
-                    </button>
+      {loading ? (
+        <div style={{ padding: '5rem', textAlign: 'center' }}><Loader2 className="animate-spin text-red" size={48} /></div>
+      ) : (
+        <>
+          {activeTab === 'overview' && (
+            <div className="admin-grid">
+              <div className="admin-card glass">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <TrendingUp className="text-red" />
+                  <h3 className="title-sm">Platform Health</h3>
+                </div>
+                <div style={{ marginTop: '1.5rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="stat-box glass" style={{ padding: '1rem', textAlign: 'center' }}>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{users.length}</div>
+                    <div className="text-muted" style={{ fontSize: '0.8rem' }}>Users</div>
                   </div>
-                  <div className="admin-item-content">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                       <h4 style={{ margin: 0, fontSize: '1.2rem' }}>{item.name}</h4>
-                       <span className="price text-red" style={{ fontWeight: 'bold' }}>{item.price} DZD</span>
-                    </div>
-                    {item.specs && <p className="admin-item-desc text-muted">{item.specs}</p>}
-                    <div className="admin-item-meta" style={{ marginTop: 'auto', paddingTop: '1rem' }}>
-                      {item.category && <span className="cat-badge">{item.category}</span>}
-                    </div>
+                  <div className="stat-box glass" style={{ padding: '1rem', textAlign: 'center' }}>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{analytics.length}</div>
+                    <div className="text-muted" style={{ fontSize: '0.8rem' }}>Events</div>
                   </div>
                 </div>
-              ))}
-              {products.length === 0 && (
-                <p className="text-muted" style={{ textAlign: 'center', padding: '2rem' }}>No items in menu yet.</p>
-              )}
+              </div>
+
+              <div className="admin-card glass">
+                <h3 className="title-sm">Top Performing Sellers</h3>
+                <div style={{ marginTop: '1rem' }}>
+                  {getBestSellers().map(([name, count], i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid var(--glass-border)' }}>
+                      <span>{name}</span>
+                      <span className="text-red" style={{ fontWeight: 600 }}>{count} visits</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
-        </div>
-        {/* BUSINESS HOURS SECTION */}
-        <div className="admin-card glass" style={{ marginTop: '2rem', gridColumn: '1 / -1' }}>
-          <div className="dash-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-            <div>
-              <h3 className="title-md" style={{ fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                 <Clock className="text-red" /> Business Hours
-              </h3>
-              <p className="text-muted" style={{ marginTop: '0.5rem' }}>Set your weekly opening and closing schedules so customers know when to order.</p>
-            </div>
-            <button className="btn-primary" onClick={saveBusinessHours}>
-              <Save size={16} style={{ marginRight: 8 }} /> Save Schedule
-            </button>
-          </div>
-          
-          <div className="hours-table-container">
-            <table className="hours-table w-100">
-              <thead>
-                <tr>
-                  <th>Day</th>
-                  <th>Status</th>
-                  <th>Opening Time</th>
-                  <th>Closing Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.entries(businessHours).map(([day, schedule]) => (
-                  <tr key={day} className={schedule.closed ? 'closed-day' : ''}>
-                    <td className="day-name font-semibold">{day}</td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <label className="toggle-switch">
-                          <input 
-                            type="checkbox" 
-                            checked={!schedule.closed} 
-                            onChange={(e) => handleHoursChange(day, 'closed', !e.target.checked)} 
-                            hidden
-                          />
-                          <div className={`mock-toggle ${!schedule.closed ? 'active' : ''}`}></div>
-                        </label>
-                        <span className="status-text">{schedule.closed ? 'Closed' : 'Open'}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <input 
-                        type="time" 
-                        value={schedule.open} 
-                        onChange={(e) => handleHoursChange(day, 'open', e.target.value)} 
-                        disabled={schedule.closed}
-                        className="base-input time-input"
-                        style={{ padding: '0.4rem', borderRadius: '8px' }}
-                      />
-                    </td>
-                    <td>
-                      <input 
-                        type="time" 
-                        value={schedule.close} 
-                        onChange={(e) => handleHoursChange(day, 'close', e.target.value)} 
-                        disabled={schedule.closed}
-                        className="base-input time-input"
-                        style={{ padding: '0.4rem', borderRadius: '8px' }}
-                      />
-                    </td>
+
+          {activeTab === 'users' && (
+            <div className="admin-card glass">
+              <div style={{ marginBottom: '2rem', display: 'flex', gap: '1rem' }}>
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
+                  <input 
+                    type="text" 
+                    className="base-input" 
+                    placeholder="Search users..." 
+                    style={{ paddingLeft: '3rem' }}
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
+              <table className="hours-table w-100">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Phone</th>
+                    <th>Actions</th>
                   </tr>
+                </thead>
+                <tbody>
+                  {users.filter(u => u.full_name?.toLowerCase().includes(searchTerm.toLowerCase())).map(u => (
+                    <tr key={u.id}>
+                      <td>{u.full_name}</td>
+                      <td><span className={`badge-glass ${u.role}`} style={{ fontSize: '0.7rem' }}>{u.role.toUpperCase()}</span></td>
+                      <td>{u.phone || 'N/A'}</td>
+                      <td>
+                        <button 
+                          onClick={() => handleDeleteUser(u.id)}
+                          className="text-red" 
+                          style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {activeTab === 'traffic' && (
+            <div className="admin-card glass">
+              <h3 className="title-sm" style={{ marginBottom: '2rem' }}>Traffic Activity (Hourly)</h3>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height: '200px', paddingBottom: '20px' }}>
+                {getTrafficByHour().map((count, i) => (
+                  <div 
+                    key={i} 
+                    style={{ 
+                      flex: 1, 
+                      background: 'var(--color-red)', 
+                      height: `${(count / (Math.max(...getTrafficByHour()) || 1)) * 100}%`,
+                      borderRadius: '2px',
+                      opacity: count > 0 ? 0.8 : 0.2
+                    }}
+                    title={`${i}:00 - ${count} hits`}
+                  ></div>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 5px' }}>
+                <span className="text-muted" style={{ fontSize: '0.7rem' }}>00:00</span>
+                <span className="text-muted" style={{ fontSize: '0.7rem' }}>12:00</span>
+                <span className="text-muted" style={{ fontSize: '0.7rem' }}>23:59</span>
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };

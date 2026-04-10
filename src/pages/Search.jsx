@@ -5,7 +5,7 @@ import FoodCard from '../components/FoodCard';
 import { supabase } from '../lib/supabase';
 import { useApp } from '../hooks/useApp';
 import { useSEO } from '../hooks/useSEO';
-import './Home.css'; // Reuse home styles for consistency
+import './Home.css';
 
 const DISCOVERY_CATEGORIES = ['All', 'Pizza', 'Traditional', 'Fast Food', 'Desserts', 'Beverages'];
 
@@ -30,38 +30,31 @@ const Search = () => {
       try {
         let supabaseQuery = supabase
           .from('products')
-          .select(`*`);
+          .select('*')
+          .eq('status', 'active');
         
         if (activeCategory !== 'All') {
           supabaseQuery = supabaseQuery.eq('category', activeCategory);
         }
 
-        // 2. Fetch All Products (DB + All Local)
-        const { data: dbData } = await supabase.from('products').select('*');
-        
-        const allLocalProducts = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key.startsWith('merchant_inventory_')) {
-            allLocalProducts.push(...JSON.parse(localStorage.getItem(key)));
-          }
-        }
-        
-        const combined = [...(dbData || []), ...allLocalProducts];
-        
-        // Filter by Category and Query
-        let filtered = combined.filter(item => {
-          const matchesQuery = item.name.toLowerCase().includes(query.toLowerCase());
-          const matchesCat = activeCategory === 'All' || item.category === activeCategory;
-          return matchesQuery && matchesCat;
-        });
-
-        // Add fallback if absolutely empty
-        if (filtered.length === 0 && !query && activeCategory === 'All') {
-           filtered = MOCK_ITEMS;
+        if (query) {
+          supabaseQuery = supabaseQuery.ilike('name', `%${query}%`);
         }
 
-        setResults(filtered);
+        const { data, error } = await supabaseQuery;
+        
+        if (error) throw error;
+
+        let filtered = data || [];
+
+        // Apply Sorting
+        if (sortOrder === 'asc') {
+          filtered.sort((a, b) => a.price - b.price);
+        } else if (sortOrder === 'desc') {
+          filtered.sort((a, b) => b.price - a.price); // Simplified: Using price for sorting in search results
+        }
+
+        setResults(filtered.map(p => ({ ...p, imageUrl: p.image_url, rating: 4.5 })));
       } catch (err) {
         console.error('Search error:', err);
       } finally {
@@ -74,7 +67,7 @@ const Search = () => {
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [query, activeCategory]);
+  }, [query, activeCategory, sortOrder]);
 
   useSEO({
     title: 'Discovery - Find Your Taste',
@@ -156,8 +149,8 @@ const Search = () => {
               style={{ padding: '0.6rem 1.2rem', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', color: 'white', outline: 'none', cursor: 'pointer' }}
             >
               <option value="default" style={{background:'#111'}}>Relevance</option>
-              <option value="desc" style={{background:'#111'}}>Top Rated</option>
               <option value="asc" style={{background:'#111'}}>Price: Low to High</option>
+              <option value="desc" style={{background:'#111'}}>Price: High to Low</option>
             </select>
           </div>
         </div>
@@ -202,11 +195,10 @@ const Search = () => {
               title="Interactive Discovery Map"
             ></iframe>
             
-            {/* Map Overlay Cards */}
             <div style={{ position: 'absolute', bottom: '2rem', left: '2rem', right: '2rem', display: 'flex', gap: '1rem', overflowX: 'auto', padding: '1rem', background: 'rgba(5,5,5,0.4)', backdropFilter: 'blur(20px)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)' }}>
                {results.slice(0, 5).map(item => (
-                 <div key={item.id} className="glass" style={{ minWidth: '300px', borderRadius: '16px', overflow: 'hidden', display: 'flex', border: '1px solid var(--glass-border)', cursor: 'pointer' }} onClick={() => navigate(`/restaurant/${item.merchant_id || 'demo'}`)}>
-                   <img src={item.image_url} alt={item.name} style={{ width: '100px', height: '100px', objectFit: 'cover' }} />
+                 <div key={item.id} className="glass" style={{ minWidth: '300px', borderRadius: '16px', overflow: 'hidden', display: 'flex', border: '1px solid var(--glass-border)', cursor: 'pointer' }} onClick={() => navigate(`/restaurant/${item.merchant_id}`)}>
+                   <img src={item.imageUrl} alt={item.name} style={{ width: '100px', height: '100px', objectFit: 'cover' }} />
                    <div style={{ padding: '1rem', flex: 1 }}>
                      <p style={{ fontWeight: 700, margin: 0, fontSize: '0.95rem' }}>{item.name}</p>
                      <p className="text-red" style={{ fontWeight: 800, margin: '0.25rem 0', fontSize: '1rem' }}>{item.price} DZD</p>

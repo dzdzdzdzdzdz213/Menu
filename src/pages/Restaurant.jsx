@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { MapPin, Star, Clock, Loader2, Grid as GridIcon, Image as ImageIcon, MessageSquare, Calendar, Store, ImageOff } from 'lucide-react';
+import { MapPin, Star, Clock, Loader2, Grid as GridIcon, Image as ImageIcon, MessageSquare, Calendar, Store, ImageOff, Phone } from 'lucide-react';
 import FoodCard from '../components/FoodCard';
 import { FoodCardSkeleton, RestaurantHeaderSkeleton } from '../components/Skeletons';
 import EmptyState from '../components/EmptyState';
 import ReviewSystem from '../components/ReviewSystem';
 import BookingEngine from '../components/BookingEngine';
 import { supabase } from '../lib/supabase';
-// import { useApp } from '../hooks/useApp';
+import { useApp } from '../hooks/useApp';
 import { useSEO } from '../hooks/useSEO';
+import toast from 'react-hot-toast';
 import './Restaurant.css';
 
 const Restaurant = () => {
   const { id } = useParams();
-  // const {  } = useApp();
+  const { trackEvent } = useApp();
   const [merchant, setMerchant] = useState(null);
   const [foods, setFoods] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -25,57 +26,56 @@ const Restaurant = () => {
     const fetchRestaurantData = async () => {
       setIsLoading(true);
       try {
-        // 1. Fetch Profile (Global Map > Local Merchant Profile > Defaults)
-        const globalMap = JSON.parse(localStorage.getItem('global_merchants_data') || '{}');
-        const localSettings = JSON.parse(localStorage.getItem(`merchant_profile_${id}`) || '{}');
-        const profile = globalMap[id] || localSettings;
+        // 1. Fetch Profile from Supabase
+        const { data: profile, error: pError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', id)
+          .single();
         
-        const restaurantName = profile.name || "Premium Local Spot";
-        const address = profile.address || "Rue Didouche Mourad, Algiers";
-        const heroImage = profile.heroImage || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1200&auto=format&fit=crop";
-        
-        // 2. Fetch Products
-        const { data: dbData } = await supabase
+        if (pError) throw pError;
+
+        // 2. Fetch Products from Supabase
+        const { data: products, error: prError } = await supabase
           .from('products')
           .select('*')
-          .eq('merchant_id', id);
+          .eq('merchant_id', id)
+          .eq('status', 'active');
 
-        const localInventory = JSON.parse(localStorage.getItem(`merchant_inventory_${id}`) || '[]');
-        
-        let allItems = [];
-        if (dbData && dbData.length > 0) allItems = [...dbData];
-        
-        // Merge local inventory if it exists
-        if (localInventory.length > 0) {
-          allItems = [...localInventory, ...allItems];
-        }
-
-        const formattedFoods = allItems.map((item, index) => ({
-          ...item,
-          brand: restaurantName,
-          imageUrl: item.image_url,
-          rating: item.rating || (4 + Math.random()).toFixed(1), 
-          cuisine: item.category || ['Pizza', 'Healthy', 'Traditional', 'Fast Food'][index % 4]
-        }));
+        if (prError) throw prError;
 
         setMerchant({
-          name: restaurantName,
-          address: address,
+          id: profile.id,
+          name: profile.full_name || "Premium Local Spot",
+          address: profile.location || "Algiers, Algeria",
           rating: 4.8,
           reviews: 124,
-          heroImage: heroImage
+          heroImage: profile.hero_image_url || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1200&auto=format&fit=crop",
+          whatsapp: profile.whatsapp,
+          description: profile.description,
+          social_links: profile.social_links || {}
         });
         
-        setFoods(formattedFoods);
+        setFoods(products.map(item => ({
+          ...item,
+          brand: profile.full_name,
+          imageUrl: item.image_url,
+          rating: 4.5, 
+          cuisine: item.category || 'Main Dish'
+        })));
+
+        // 3. Track Visit
+        trackEvent('visit', id);
 
       } catch (err) {
         console.error('Error fetching restaurant data:', err);
+        toast.error('Failed to load restaurant details');
       } finally {
         setIsLoading(false);
       }
     };
     fetchRestaurantData();
-  }, [id]);
+  }, [id, trackEvent]);
 
   useSEO({
     title: merchant ? merchant.name : 'Restaurant',
@@ -83,6 +83,16 @@ const Restaurant = () => {
     image: merchant ? merchant.heroImage : '/favicon.svg',
     url: `/restaurant/${id}`
   });
+
+  const handleOrderWhatsApp = () => {
+    if (!merchant?.whatsapp) {
+      toast.error('Seller WhatsApp not available');
+      return;
+    }
+    trackEvent('whatsapp_click', id);
+    const message = encodeURIComponent(`Hello ${merchant.name}, I would like to order from your menu on Menu platform.`);
+    window.open(`https://wa.me/${merchant.whatsapp.replace(/\+/g, '')}?text=${message}`, '_blank');
+  };
 
   if (isLoading) {
     return (
@@ -165,7 +175,7 @@ const Restaurant = () => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.5rem' }}>
             {foods.map((food, idx) => (
               <div key={idx} style={{ aspectRatio: '1/1', overflow: 'hidden', borderRadius: '8px' }}>
-                <img src={food.imageUrl} alt="Gallery item" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={food.imageUrl || 'https://via.placeholder.com/300'} alt="Gallery item" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
             ))}
           </div>
@@ -212,42 +222,28 @@ const Restaurant = () => {
 
       <div className="container" style={{ display: 'flex', flexDirection: 'column', gap: '3rem', marginTop: '-2rem', zIndex: 10, position: 'relative' }}>
         
-        {/* Instagram Style Tab Navigation */}
         <div className="profile-tabs glass">
-          <button 
-            onClick={() => setActiveTab('Menu')}
-            className={`tab-btn ${activeTab === 'Menu' ? 'active' : ''}`}
-          >
-            <GridIcon size={18} /> Menu
-          </button>
-          <button 
-            onClick={() => setActiveTab('Gallery')}
-            className={`tab-btn ${activeTab === 'Gallery' ? 'active' : ''}`}
-          >
-            <ImageIcon size={18} /> Gallery
-          </button>
-          <button 
-            onClick={() => setActiveTab('Reviews')}
-            className={`tab-btn ${activeTab === 'Reviews' ? 'active' : ''}`}
-          >
-            <MessageSquare size={18} /> Reviews
-          </button>
-          <button 
-            onClick={() => setActiveTab('Reservations')}
-            className={`tab-btn ${activeTab === 'Reservations' ? 'active' : ''}`}
-          >
-            <Calendar size={18} /> Reserve
-          </button>
+          <button onClick={() => setActiveTab('Menu')} className={`tab-btn ${activeTab === 'Menu' ? 'active' : ''}`}><GridIcon size={18} /> Menu</button>
+          <button onClick={() => setActiveTab('Gallery')} className={`tab-btn ${activeTab === 'Gallery' ? 'active' : ''}`}><ImageIcon size={18} /> Gallery</button>
+          <button onClick={() => setActiveTab('Reviews')} className={`tab-btn ${activeTab === 'Reviews' ? 'active' : ''}`}><MessageSquare size={18} /> Reviews</button>
+          <button onClick={() => setActiveTab('Reservations')} className={`tab-btn ${activeTab === 'Reservations' ? 'active' : ''}`}><Calendar size={20} /> Reserve</button>
         </div>
 
         <div className="restaurant-main-grid">
-          
           <main className="restaurant-content">
             {renderTabContent()}
           </main>
 
           <aside className="restaurant-sidebar">
             <div className="glass" style={{ padding: '2rem', borderRadius: '16px', position: 'sticky', top: '100px' }}>
+               <button 
+                 onClick={handleOrderWhatsApp}
+                 className="btn-primary w-100" 
+                 style={{ marginBottom: '2rem', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+               >
+                 <Phone size={18} /> Order via WhatsApp
+               </button>
+
                <h3 className="title-sm" style={{ marginBottom: '1rem' }}>Location Map</h3>
                <p className="text-muted" style={{ marginBottom: '1.5rem', fontSize: '0.9rem' }}>{merchant.address}</p>
                <div className="map-container">
@@ -262,12 +258,20 @@ const Restaurant = () => {
                <div style={{ marginTop: '2rem', borderTop: '1px solid var(--glass-border)', paddingTop: '1.5rem' }}>
                  <h4 className="title-sm" style={{ marginBottom: '1rem' }}>About Place</h4>
                  <p className="text-muted" style={{ fontSize: '0.95rem', lineHeight: '1.6' }}>
-                    A certified premium place on the platform, highly rated by the community for excellent service and unforgettable experiences.
+                    {merchant.description || "A certified premium place on the platform, highly rated by the community for excellent service and unforgettable experiences."}
                  </p>
+                 {merchant.social_links && Object.keys(merchant.social_links).length > 0 && (
+                   <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
+                     {Object.entries(merchant.social_links).map(([key, value]) => value && (
+                       <a key={key} href={value} target="_blank" rel="noopener noreferrer" className="text-muted hover-red">
+                         {key.charAt(0).toUpperCase()}
+                       </a>
+                     ))}
+                   </div>
+                 )}
                </div>
             </div>
           </aside>
-
         </div>
       </div>
     </div>

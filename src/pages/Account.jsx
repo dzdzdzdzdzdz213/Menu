@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { User, ShieldCheck, Mail, Lock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, ShieldCheck, Mail, Lock, LogOut, ArrowRight, Settings, ShoppingBag, Store } from 'lucide-react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useApp } from '../hooks/useApp';
 import { supabase } from '../lib/supabase';
@@ -8,10 +8,9 @@ import { useSEO } from '../hooks/useSEO';
 import './Home.css';
 
 const Account = () => {
-  const { user, signInWithGoogle, isLoggingIn } = useApp();
+  const { user, userProfile, signInWithGoogle, isLoggingIn, signOut, loading } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
-  const [showDemo, setShowDemo] = useState(false);
   
   useSEO({
     title: 'Your Account',
@@ -21,50 +20,79 @@ const Account = () => {
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
-  const redirectPath = location.state?.from?.pathname || '/merchants';
+  const redirectPath = location.state?.from?.pathname || '/';
 
-  if (user) {
-    return <Navigate to={redirectPath} replace />;
-  }
-
-  const validate = () => {
-    const newErrors = {};
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email) newErrors.email = "Email is required";
-    else if (!emailRegex.test(email)) newErrors.email = "Please enter a valid email address";
-    
-    if (!password) newErrors.password = "Password is required";
-    else if (password.length < 6) newErrors.password = "Password must be at least 6 characters";
-
-    if (Object.keys(newErrors).length > 0) {
-      toast.error("Please fix the validation errors");
+  // Redirection Logic
+  useEffect(() => {
+    if (!loading && user) {
+      if (!userProfile?.phone || !userProfile?.age) {
+        navigate('/setup-profile');
+      }
     }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  }, [user, userProfile, loading, navigate]);
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();
-    if (!validate()) return;
-    
     setIsLoading(true);
-    const { data: _data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    setIsLoading(false);
-    
-    if (error) {
-      toast.error(error.message || "Failed to sign in. Please try again.");
-    } else {
-      toast.success("Successfully logged in!");
-      navigate(redirectPath, { replace: true });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      toast.success("Welcome back!");
+    } catch (err) {
+      toast.error(err.message || "Failed to sign in.");
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  if (loading) return <div className="container" style={{ paddingTop: '10rem', textAlign: 'center' }}>Loading session...</div>;
+
+  if (user && userProfile?.phone) {
+    return (
+      <div className="account-page container page-transition" style={{ paddingTop: '8rem' }}>
+        <div className="glass" style={{ padding: '3rem', borderRadius: '24px', maxWidth: '800px', margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginBottom: '3rem', paddingBottom: '2rem', borderBottom: '1px solid var(--glass-border)' }}>
+            <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'var(--color-red)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: 800, color: 'white' }}>
+               {userProfile.full_name?.charAt(0) || 'U'}
+            </div>
+            <div>
+              <h2 className="title-md" style={{ margin: 0 }}>{userProfile.full_name}</h2>
+              <p className="text-muted" style={{ marginBottom: '0.5rem' }}>{user.email}</p>
+              <span className={`badge-glass ${userProfile.role}`} style={{ fontSize: '0.8rem' }}>{userProfile.role.toUpperCase()}</span>
+            </div>
+          </div>
+
+          <div className="admin-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+            <div className="stat-box glass clickable" onClick={() => navigate('/history')} style={{ padding: '1.5rem', textAlign: 'center' }}>
+              <ShoppingBag size={24} className="text-red" style={{ marginBottom: '0.5rem' }} />
+              <div>Order History</div>
+            </div>
+            
+            {userProfile.role === 'seller' && (
+              <div className="stat-box glass clickable" onClick={() => navigate('/seller-dashboard')} style={{ padding: '1.5rem', textAlign: 'center', border: '1px solid var(--color-orange)' }}>
+                <Store size={24} style={{ color: 'var(--color-orange)', marginBottom: '0.5rem' }} />
+                <div style={{ color: 'var(--color-orange)' }}>Manage Shop</div>
+              </div>
+            )}
+
+            {userProfile.role === 'admin' && (
+              <div className="stat-box glass clickable" onClick={() => navigate('/admin')} style={{ padding: '1.5rem', textAlign: 'center', border: '1px solid var(--color-red)' }}>
+                <ShieldCheck size={24} className="text-red" style={{ marginBottom: '0.5rem' }} />
+                <div className="text-red">Admin Panel</div>
+              </div>
+            )}
+
+            <div className="stat-box glass clickable" onClick={signOut} style={{ padding: '1.5rem', textAlign: 'center' }}>
+              <LogOut size={24} className="text-muted" style={{ marginBottom: '0.5rem' }} />
+              <div>Sign Out</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="account-page container page-transition" style={{ paddingTop: '5rem', maxWidth: '600px' }}>
@@ -81,82 +109,67 @@ const Account = () => {
         }}>
           <User size={40} className="text-red" />
         </div>
-        <h2 className="title-lg" style={{ marginBottom: '1rem' }}>Sign In to <span className="text-red">Menu</span></h2>
+        <h2 className="title-lg" style={{ marginBottom: '1rem' }}>Welcome to <span className="text-red">Menu</span></h2>
         <p className="text-muted" style={{ marginBottom: '2rem', fontSize: '1.1rem' }}>
-          Explore the world's finest Mediterranean delicacies.
+          Sustainable gastronomy for the digital age.
         </p>
 
-        <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '2rem', textAlign: 'left' }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>Email Address</label>
-            <div style={{ position: 'relative' }}>
-              <Mail size={20} className="text-muted" style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)' }} />
-              <input 
-                type="email" 
-                value={email}
-                onChange={(e) => { setEmail(e.target.value); setErrors(prev => ({ ...prev, email: null })) }}
-                placeholder="you@example.com" 
-                style={{ width: '100%', padding: '1rem 1rem 1rem 3rem', borderRadius: '12px', border: `1px solid ${errors.email ? 'var(--color-red)' : 'var(--glass-border)'}`, background: 'rgba(0,0,0,0.3)', color: 'white' }}
-              />
-            </div>
-            {errors.email && <span style={{ color: 'var(--color-red)', fontSize: '0.85rem', display: 'block', marginTop: '0.5rem' }}>{errors.email}</span>}
-          </div>
-
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>Password</label>
-            <div style={{ position: 'relative' }}>
-              <Lock size={20} className="text-muted" style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)' }} />
-              <input 
-                type="password" 
-                value={password}
-                onChange={(e) => { setPassword(e.target.value); setErrors(prev => ({ ...prev, password: null })) }}
-                placeholder="Min. 6 characters" 
-                style={{ width: '100%', padding: '1rem 1rem 1rem 3rem', borderRadius: '12px', border: `1px solid ${errors.password ? 'var(--color-red)' : 'var(--glass-border)'}`, background: 'rgba(0,0,0,0.3)', color: 'white' }}
-              />
-            </div>
-            {errors.password && <span style={{ color: 'var(--color-red)', fontSize: '0.85rem', display: 'block', marginTop: '0.5rem' }}>{errors.password}</span>}
-          </div>
-
-          <button type="submit" className="btn-primary" disabled={isLoading} style={{ padding: '1rem', borderRadius: '12px', fontSize: '1.1rem' }}>
-            {isLoading ? 'Signing In...' : 'Sign In'}
-          </button>
-        </form>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2.5rem' }}>
           <button 
             className="google-signin-btn glass" 
-            onClick={() => signInWithGoogle('customer')}
+            onClick={signInWithGoogle}
             disabled={isLoggingIn}
-            style={{ width: '100%', padding: '1rem', borderRadius: '12px', background: 'white', color: '#111', fontWeight: 600, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+            style={{ width: '100%', padding: '1.2rem', borderRadius: '14px', background: 'white', color: '#111', fontWeight: 600, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
           >
             <img src="https://www.google.com/favicon.ico" alt="G" style={{ width: '18px' }} />
             {isLoggingIn ? 'Connecting...' : 'Continue with Google'}
           </button>
         </div>
 
-        <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--glass-border)' }}>
-          <button 
-            onClick={() => setShowDemo(!showDemo)}
-            style={{ background: 'transparent', border: 'none', color: 'var(--color-text-muted)', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
-          >
-            {showDemo ? 'Hide Developer Gateways' : 'Enter via Demo Gateways'}
-          </button>
-
-          {showDemo && (
-            <div className="slide-in-top" style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-               <button onClick={() => signInWithGoogle('merchant')} className="badge-glass" style={{ padding: '0.8rem', cursor: 'pointer', border: '1px solid var(--color-orange)', color: 'var(--color-orange)' }}>Merchant Board</button>
-               <button onClick={() => signInWithGoogle('admin')} className="badge-glass" style={{ padding: '0.8rem', cursor: 'pointer', border: '1px solid var(--color-red)', color: 'var(--color-red)' }}>Admin Board</button>
-            </div>
-          )}
+        <div style={{ position: 'relative', marginBottom: '2.5rem' }}>
+          <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: 'var(--glass-border)', zIndex: 0 }}></div>
+          <span style={{ position: 'relative', background: 'rgba(20,20,20,1)', padding: '0 1rem', color: 'var(--color-text-muted)', fontSize: '0.8rem', zIndex: 1 }}>OR ADMIN LOGIN</span>
         </div>
+
+        <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', textAlign: 'left' }}>
+          <div>
+            <div style={{ position: 'relative' }}>
+              <Mail size={18} className="text-muted" style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)' }} />
+              <input 
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Admin Email" 
+                className="base-input"
+                style={{ paddingLeft: '3rem' }}
+              />
+            </div>
+          </div>
+
+          <div>
+            <div style={{ position: 'relative' }}>
+              <Lock size={18} className="text-muted" style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)' }} />
+              <input 
+                type="password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password" 
+                className="base-input"
+                style={{ paddingLeft: '3rem' }}
+              />
+            </div>
+          </div>
+
+          <button type="submit" className="btn-primary" disabled={isLoading} style={{ padding: '1rem', borderRadius: '12px' }}>
+            {isLoading ? 'Confirming...' : 'Sign In as Admin'}
+          </button>
+        </form>
 
         <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'center' }}>
           <ShieldCheck size={20} className="text-muted" />
-          <span className="text-muted" style={{ fontSize: '0.8rem' }}>Secure connection verified</span>
+          <span className="text-muted" style={{ fontSize: '0.8rem' }}>Secure verified endpoint</span>
         </div>
       </section>
-      
-      <div className="mobile-nav-spacer"></div>
     </div>
   );
 };

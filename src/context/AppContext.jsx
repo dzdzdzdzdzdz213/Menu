@@ -1,4 +1,6 @@
-import React, { createContext, useState } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import toast from 'react-hot-toast';
 
 const AppContext = createContext(null);
 
@@ -10,33 +12,96 @@ export const AppProvider = ({ children }) => {
   });
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('menu_user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [user, setUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const signInWithGoogle = async (role = 'customer') => {
-    setIsLoggingIn(true);
-    // Mocking a successful Google login with specific role
-    setTimeout(() => {
-      const mockUser = { 
-        id: 'demo-user-' + Date.now(), 
-        email: `${role}@premium.com`, 
-        role: role,
-        user_metadata: { 
-          full_name: role === 'merchant' ? 'Al Baraka Kitchen' : role === 'admin' ? 'Master Admin' : 'Premium Gastronome',
-          avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=100&auto=format&fit=crop'
-        } 
-      };
-      setUser(mockUser);
-      localStorage.setItem('menu_user', JSON.stringify(mockUser));
-      setIsLoggingIn(false);
-    }, 800);
+  // Initialize Auth Session
+  useEffect(() => {
+    const initSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUser(session.user);
+        await fetchProfile(session.user.id);
+      }
+      setLoading(false);
+    };
+
+    initSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session) {
+        setUser(session.user);
+        await fetchProfile(session.user.id);
+      } else {
+        setUser(null);
+        setUserProfile(null);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchProfile = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        // If profile doesn't exist yet, we'll wait for the trigger or creation
+        console.warn('Profile not found yet for user:', userId);
+        return;
+      }
+      setUserProfile(data);
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+    }
   };
 
-  const signOut = () => {
-    setUser(null);
-    localStorage.removeItem('menu_user');
+  const signInWithGoogle = async () => {
+    setIsLoggingIn(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/account',
+        }
+      });
+      if (error) throw error;
+    } catch (err) {
+      toast.error(err.message || 'Failed to sign in');
+      setIsLoggingIn(false);
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setUser(null);
+      setUserProfile(null);
+      toast.success('Signed out successfully');
+    } catch (err) {
+      toast.error('Error signing out');
+    }
+  };
+
+  const trackEvent = async (type, sellerId, productId = null) => {
+    if (!sellerId) return;
+    try {
+      await supabase.from('analytics').insert({
+        event_type: type,
+        seller_id: sellerId,
+        product_id: productId,
+        user_id: user?.id
+      });
+    } catch (err) {
+      console.error('Tracking failed:', err);
+    }
   };
 
   const addToCart = (item) => {
@@ -56,8 +121,9 @@ export const AppProvider = ({ children }) => {
     <AppContext.Provider value={{ 
       isCartOpen, setIsCartOpen, 
       cart, addToCart, removeFromCart,
-      user, setUser, 
-      signInWithGoogle, isLoggingIn, signOut
+      user, userProfile, setUser, 
+      signInWithGoogle, isLoggingIn, signOut,
+      loading, fetchProfile, trackEvent
     }}>
       {children}
     </AppContext.Provider>
