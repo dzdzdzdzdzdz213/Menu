@@ -1,87 +1,174 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, ShoppingBag, ChevronDown, User, Star, UtensilsCrossed } from 'lucide-react';
+import { Home, ShoppingBag, User, Store, Shield, ChevronDown, Globe, ChevronRight } from 'lucide-react';
 import { useApp } from '../hooks/useApp';
+import i18n from '../lib/i18n';
 import './Navigation.css';
 
 const Navigation = () => {
-  const { cart, setIsCartOpen } = useApp();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { cart, setIsCartOpen, user, signOut } = useApp();
+  const [isPortalOpen, setIsPortalOpen] = useState(false);
+  const [isLangOpen, setIsLangOpen] = useState(false);
   const navigate = useNavigate();
 
-  const handleCategoryClick = (category) => {
-    setIsMenuOpen(false);
-    navigate(`/search?category=${encodeURIComponent(category)}`);
+  const handlePortalTouch = (e) => {
+    // For mobile, we want to toggle on click
+    if (window.innerWidth <= 900) {
+      e.preventDefault();
+      setIsPortalOpen(!isPortalOpen);
+    }
   };
+
+  const handleSignOut = () => {
+    signOut();
+    setIsPortalOpen(false);
+    navigate('/');
+  };
+
+  const PORTALS = [
+    { icon: User,   label: 'Customer Portal', sub: 'Orders & profile',      path: '/account',   color: 'rgba(255,255,255,0.9)' },
+    { icon: Store,  label: 'Merchant Portal', sub: 'Manage restaurant',     path: '/merchants', color: '#ff9100' },
+    { icon: Shield, label: 'Admin Portal',    sub: 'Platform management',   path: '/admin',     color: '#ff3333' },
+  ];
+
+  const LANGS = [
+    { code: 'en', label: '🇬🇧 EN' },
+    { code: 'fr', label: '🇫🇷 FR' },
+    { code: 'ar', label: '🇩🇿 AR' },
+  ];
+
+  const currentLang = LANGS.find(l => l.code === i18n.language) || LANGS[0];
 
   return (
     <>
-      <header className="desktop-header glass slide-in">
+      <header className="desktop-header">
         <div className="header-container">
+
           {/* Logo */}
           <NavLink to="/" className="logo-link">
             <h1 className="logo-text">Menu<span className="logo-dot">.</span></h1>
           </NavLink>
 
-          {/* Universal Nav Links */}
+          {/* Nav Links */}
           <nav className="desktop-nav">
-            <div 
+            <NavLink to="/" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+              Home
+            </NavLink>
+
+            {/* Portal Dropdown */}
+            <div
               className="nav-dropdown-container"
-              onMouseEnter={() => setIsMenuOpen(true)}
-              onMouseLeave={() => setIsMenuOpen(false)}
+              onMouseEnter={() => window.innerWidth > 900 && setIsPortalOpen(true)}
+              onMouseLeave={() => window.innerWidth > 900 && setIsPortalOpen(false)}
             >
-              <button className="nav-item nav-dropdown-trigger" onClick={() => navigate('/')}>
-                Menu <ChevronDown size={14} style={{ marginLeft: 4 }} />
+              <button 
+                className={`nav-item nav-dropdown-trigger ${isPortalOpen ? 'active' : ''}`}
+                onClick={handlePortalTouch}
+              >
+                Dashboards <ChevronDown size={14} style={{ marginLeft: 4, transition: 'transform 0.3s', transform: isPortalOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
               </button>
-              
-              {isMenuOpen && (
-                <div className="nav-dropdown-menu glass slide-in" style={{ animationDuration: '0.2s' }}>
-                  <div className="dropdown-section">
-                    <h4>Account</h4>
-                    <button onClick={() => navigate('/admin')}><User size={14} /> My Profile</button>
+
+              {isPortalOpen && (
+                <div className="nav-dropdown-menu slide-in-top">
+                  <div className="dropdown-header">
+                    <span className="dropdown-label">Workspace Hub</span>
+                    {user && (
+                      <button className="text-red x-small-btn" onClick={handleSignOut}>Sign Out</button>
+                    )}
                   </div>
-                  <div className="dropdown-divider"></div>
-                  <div className="dropdown-section">
-                    <h4>Cuisine Categories</h4>
-                    <button onClick={() => handleCategoryClick('Sweets')}><UtensilsCrossed size={14} /> Sweets & Desserts</button>
-                    <button onClick={() => handleCategoryClick('Traditional Sweets')}><UtensilsCrossed size={14} /> Traditional Sweets</button>
-                    <button onClick={() => handleCategoryClick('Japanese')}><UtensilsCrossed size={14} /> Japanese</button>
-                    <button onClick={() => handleCategoryClick('Chinese')}><UtensilsCrossed size={14} /> Chinese</button>
-                    <button onClick={() => handleCategoryClick('Traditional Restaurants')}><UtensilsCrossed size={14} /> Traditional Restaurants</button>
-                  </div>
-                  <div className="dropdown-divider"></div>
-                  <div className="dropdown-section">
-                    <button onClick={() => { setIsMenuOpen(false); navigate('/'); }} style={{ color: 'var(--color-primary)', fontWeight: 'bold' }}>
-                      <Star size={14} /> Browse Top Restaurants
+                  <div className="dropdown-divider" />
+                  {PORTALS.map(p => (
+                    <button
+                      key={p.path}
+                      className="dropdown-portal-item"
+                      onClick={() => { setIsPortalOpen(false); navigate(p.path); }}
+                    >
+                      <div className="dp-icon" style={{ background: p.color + '15', color: p.color }}>
+                        <p.icon size={18} />
+                      </div>
+                      <div className="dp-text">
+                        <span className="dp-label" style={{ color: p.color }}>{p.label}</span>
+                        <span className="dp-sub">{p.sub}</span>
+                      </div>
+                      <ChevronRight size={14} className="dp-arrow" />
                     </button>
-                  </div>
+                  ))}
                 </div>
               )}
             </div>
-            <NavLink to="/admin" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
-               Admin Dashboard
+
+            <NavLink to="/search" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+              Explore
             </NavLink>
           </nav>
 
-          {/* Command Actions */}
+          {/* Right side actions */}
           <div className="header-actions">
-            <button className="icon-btn cart-btn chromatic-shift" onClick={() => setIsCartOpen(true)}>
-              <ShoppingBag size={18} />
+            {/* Language Switcher */}
+            <div
+              className="lang-switcher-btn nav-dropdown-container"
+              onMouseEnter={() => setIsLangOpen(true)}
+              onMouseLeave={() => setIsLangOpen(false)}
+            >
+              <button className="icon-btn lang-btn" onClick={() => setIsLangOpen(!isLangOpen)}>
+                <Globe size={17} />
+                <span className="lang-code">{currentLang.code.toUpperCase()}</span>
+              </button>
+
+              {isLangOpen && (
+                <div className="nav-dropdown-menu" style={{ right: 0, left: 'auto', minWidth: '140px' }}>
+                  {LANGS.map(l => (
+                    <button
+                      key={l.code}
+                      className={`dropdown-portal-item ${i18n.language === l.code ? 'dp-active' : ''}`}
+                      onClick={() => { i18n.changeLanguage(l.code); setIsLangOpen(false); }}
+                    >
+                      <span style={{ fontSize: '1.1rem' }}>{l.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Cart */}
+            <button className="icon-btn cart-btn" onClick={() => setIsCartOpen(true)} title="Cart">
+              <ShoppingBag size={19} />
               {cart.length > 0 && <span className="cart-badge">{cart.length}</span>}
             </button>
+
+            {/* Account shortcut */}
+            <button className="icon-btn" onClick={() => navigate(user ? '/account' : '/account')} title="Account">
+              {user ? (
+                <div 
+                  style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--color-red)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}
+                >
+                  {user.user_metadata?.full_name?.charAt(0) || 'U'}
+                </div>
+              ) : (
+                <User size={19} />
+              )}
+            </button>
           </div>
+
         </div>
       </header>
 
-      {/* Mobile Orbital HUD */}
-      <nav className="mobile-nav glass slide-in">
-        <NavLink to="/" className={({isActive}) => isActive ? 'mobile-nav-item active' : 'mobile-nav-item'}>
-          <Home size={22} />
+      {/* Mobile bottom nav */}
+      <nav className="mobile-nav">
+        <NavLink to="/" className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}>
+          <Home size={22} /><span>Home</span>
         </NavLink>
-        <button onClick={() => setIsCartOpen(true)} className="mobile-nav-item" style={{background: 'transparent', border: 'none', position: 'relative'}}>
+        <NavLink to="/search" className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}>
+          <Store size={22} /><span>Explore</span>
+        </NavLink>
+        <button className="mobile-nav-item" style={{ background: 'transparent', border: 'none', position: 'relative', cursor: 'pointer', color: 'inherit' }} onClick={() => setIsCartOpen(true)}>
           <ShoppingBag size={22} />
-          {cart.length > 0 && <span className="cart-badge" style={{position: 'absolute', top: -5, right: -5, padding: '2px 5px', fontSize: '10px'}}>{cart.length}</span>}
+          {cart.length > 0 && <span className="cart-badge" style={{ position: 'absolute', top: -4, right: -4 }}>{cart.length}</span>}
+          <span>Cart</span>
         </button>
+        <NavLink to="/account" className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}>
+          <User size={22} /><span>Account</span>
+        </NavLink>
       </nav>
     </>
   );

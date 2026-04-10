@@ -11,6 +11,7 @@ const Account = () => {
   const { user, signInWithGoogle, isLoggingIn } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
+  const [showDemo, setShowDemo] = useState(false);
   
   useSEO({
     title: 'Your Account',
@@ -82,7 +83,7 @@ const Account = () => {
         </div>
         <h2 className="title-lg" style={{ marginBottom: '1rem' }}>Sign In to <span className="text-red">Menu</span></h2>
         <p className="text-muted" style={{ marginBottom: '2rem', fontSize: '1.1rem' }}>
-          Login to manage orders, checkout, and delivery applications.
+          Explore the world's finest Mediterranean delicacies.
         </p>
 
         <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '2rem', textAlign: 'left' }}>
@@ -121,40 +122,33 @@ const Account = () => {
           </button>
         </form>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-          <div style={{ flex: 1, height: '1px', background: 'var(--glass-border)' }}></div>
-          <span className="text-muted" style={{ fontSize: '0.9rem' }}>OR</span>
-          <div style={{ flex: 1, height: '1px', background: 'var(--glass-border)' }}></div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <button 
+            className="google-signin-btn glass" 
+            onClick={() => signInWithGoogle('customer')}
+            disabled={isLoggingIn}
+            style={{ width: '100%', padding: '1rem', borderRadius: '12px', background: 'white', color: '#111', fontWeight: 600, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+          >
+            <img src="https://www.google.com/favicon.ico" alt="G" style={{ width: '18px' }} />
+            {isLoggingIn ? 'Connecting...' : 'Continue with Google'}
+          </button>
         </div>
-        
-        <button 
-          className="google-signin-btn glass" 
-          onClick={signInWithGoogle}
-          disabled={isLoggingIn}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '12px',
-            width: '100%',
-            padding: '1rem',
-            borderRadius: '12px',
-            background: 'white',
-            color: '#1f1f1f',
-            fontSize: '1.1rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            border: 'none',
-            transition: 'all 0.2s'
-          }}
-        >
-          <img src="https://www.google.com/favicon.ico" alt="Google" style={{ width: '20px' }} />
-          {isLoggingIn ? 'Connecting...' : 'Continue with Google'}
-        </button>
 
-        <p className="text-muted" style={{ marginTop: '2rem', fontSize: '0.85rem' }}>
-          By continuing, you agree to our Terms of Service and Privacy Policy.
-        </p>
+        <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--glass-border)' }}>
+          <button 
+            onClick={() => setShowDemo(!showDemo)}
+            style={{ background: 'transparent', border: 'none', color: 'var(--color-text-muted)', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
+          >
+            {showDemo ? 'Hide Developer Gateways' : 'Enter via Demo Gateways'}
+          </button>
+
+          {showDemo && (
+            <div className="slide-in-top" style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+               <button onClick={() => signInWithGoogle('merchant')} className="badge-glass" style={{ padding: '0.8rem', cursor: 'pointer', border: '1px solid var(--color-orange)', color: 'var(--color-orange)' }}>Merchant Board</button>
+               <button onClick={() => signInWithGoogle('admin')} className="badge-glass" style={{ padding: '0.8rem', cursor: 'pointer', border: '1px solid var(--color-red)', color: 'var(--color-red)' }}>Admin Board</button>
+            </div>
+          )}
+        </div>
 
         <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'center' }}>
           <ShieldCheck size={20} className="text-muted" />

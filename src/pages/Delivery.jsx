@@ -41,7 +41,6 @@ const Delivery = () => {
     }
 
     // Secure handling simulation
-    console.log("Submitting secure fleet application:", formData);
     setIsRegistered(true);
     toast.success("Application successfully submitted!");
   };

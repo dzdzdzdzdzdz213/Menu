@@ -1,0 +1,37 @@
+.header {
+  padding: 1rem 0;
+}
+
+.logo {
+  font-family: var(--font-family);
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--color-text);
+}
+
+.nav-links {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.nav-link {
+  color: var(--color-text);
+  text-decoration: none;
+  font-weight: 600;
+  position: relative;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  background: var(--color-red);
+  left: 0;
+  bottom: -4px;
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}

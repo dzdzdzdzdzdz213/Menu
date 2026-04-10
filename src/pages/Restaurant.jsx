@@ -25,24 +25,38 @@ const Restaurant = () => {
     const fetchRestaurantData = async () => {
       setIsLoading(true);
       try {
+        // 1. Fetch Profile (Global Map > Local Merchant Profile > Defaults)
+        const globalMap = JSON.parse(localStorage.getItem('global_merchants_data') || '{}');
         const localSettings = JSON.parse(localStorage.getItem(`merchant_profile_${id}`) || '{}');
+        const profile = globalMap[id] || localSettings;
         
-        let address = localSettings.address || "Rue Didouche Mourad, Algiers";
-        let heroImage = localSettings.heroImage || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1200&auto=format&fit=crop";
-        let restaurantName = localSettings.name || "Premium Local Spot";
+        const restaurantName = profile.name || "Premium Local Spot";
+        const address = profile.address || "Rue Didouche Mourad, Algiers";
+        const heroImage = profile.heroImage || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1200&auto=format&fit=crop";
         
-        const { data, _error } = await supabase
+        // 2. Fetch Products
+        const { data: dbData } = await supabase
           .from('products')
           .select('*')
           .eq('merchant_id', id);
 
-        const realProducts = data && data.length > 0 ? data.map((item, index) => ({
+        const localInventory = JSON.parse(localStorage.getItem(`merchant_inventory_${id}`) || '[]');
+        
+        let allItems = [];
+        if (dbData && dbData.length > 0) allItems = [...dbData];
+        
+        // Merge local inventory if it exists
+        if (localInventory.length > 0) {
+          allItems = [...localInventory, ...allItems];
+        }
+
+        const formattedFoods = allItems.map((item, index) => ({
           ...item,
           brand: restaurantName,
           imageUrl: item.image_url,
           rating: item.rating || (4 + Math.random()).toFixed(1), 
           cuisine: item.category || ['Pizza', 'Healthy', 'Traditional', 'Fast Food'][index % 4]
-        })) : [];
+        }));
 
         setMerchant({
           name: restaurantName,
@@ -52,18 +66,7 @@ const Restaurant = () => {
           heroImage: heroImage
         });
         
-        const localInventory = JSON.parse(localStorage.getItem(`merchant_inventory_${id}`) || '[]');
-        if (localInventory.length > 0 && realProducts.length === 0) {
-           setFoods(localInventory.map((i, idx) => ({
-             ...i, 
-             brand: restaurantName, 
-             imageUrl: i.image_url,
-             rating: i.rating || (4 + Math.random()).toFixed(1),
-             cuisine: i.category || ['Pizza', 'Healthy', 'Traditional', 'Fast Food'][idx % 4]
-           })));
-        } else {
-           setFoods(realProducts);
-        }
+        setFoods(formattedFoods);
 
       } catch (err) {
         console.error('Error fetching restaurant data:', err);

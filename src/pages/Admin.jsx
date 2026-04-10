@@ -45,8 +45,18 @@ const Admin = () => {
   const fetchProducts = async () => {
     setIsLoading(true);
     try {
-      const { data } = await supabase.from('products').select();
-      setProducts(data || []);
+      const { data: dbData } = await supabase.from('products').select();
+      
+      // Pull all local inventories if any
+      const allLocal = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('merchant_inventory_')) {
+          allLocal.push(...JSON.parse(localStorage.getItem(key)));
+        }
+      }
+      
+      setProducts([...(dbData || []), ...allLocal]);
     } catch (err) {
       console.error(err);
     } finally {
@@ -72,20 +82,27 @@ const Admin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name || !price || !imageBase64) {
-      addToast('Please fill all required fields and upload an image', 'error');
+      addToast('Please fill all required fields', 'error');
       return;
     }
     
     setIsSubmitting(true);
     try {
-      await supabase.from('products').insert([{ 
-        name, 
-        price: Number(price), 
+      // For Admin, we mock add to a global pool for now
+      const newItemObj = {
+        id: 'admin-' + Date.now(),
+        name,
+        price: Number(price),
         category,
         specs: description,
-        image_url: imageBase64 
-      }]);
-      addToast('Item added successfully!', 'success');
+        image_url: imageBase64,
+        merchant_id: 'admin'
+      };
+      
+      const adminInv = JSON.parse(localStorage.getItem('merchant_inventory_admin') || '[]');
+      localStorage.setItem('merchant_inventory_admin', JSON.stringify([newItemObj, ...adminInv]));
+      
+      addToast('Platform delicacy added!', 'success');
       setName('');
       setPrice('');
       setCategory('');
@@ -93,16 +110,33 @@ const Admin = () => {
       setImageBase64('');
       fetchProducts();
     } catch {
-      addToast('Failed to add item. Maybe image is too large.', 'error');
+      addToast('Failed to add item.', 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (id) => {
+    if (!window.confirm('Erase this item platform-wide?')) return;
+    
     try {
-      await supabase.from('products').delete().eq('id', id);
-      addToast('Item deleted!', 'info');
+      if (String(id).startsWith('admin-')) {
+         const inv = JSON.parse(localStorage.getItem('merchant_inventory_admin') || '[]');
+         localStorage.setItem('merchant_inventory_admin', JSON.stringify(inv.filter(i => i.id !== id)));
+      } else if (String(id).startsWith('local-')) {
+         // Loop through all merchants to find and delete
+         for (let i = 0; i < localStorage.length; i++) {
+           const key = localStorage.key(i);
+           if (key.startsWith('merchant_inventory_')) {
+             const inv = JSON.parse(localStorage.getItem(key));
+             localStorage.setItem(key, JSON.stringify(inv.filter(i => i.id !== id)));
+           }
+         }
+      } else {
+         await supabase.from('products').delete().eq('id', id);
+      }
+      
+      addToast('Item removed from platform.', 'info');
       fetchProducts();
     } catch {
       addToast('Failed to delete item', 'error');
@@ -112,8 +146,8 @@ const Admin = () => {
   return (
     <div className="admin-page container">
       <div className="admin-header">
-        <h2 className="title-lg">Menu <span className="gradient-text">Dashboard</span></h2>
-        <p className="text-muted">Easily add or remove items from your public menu.</p>
+        <h2 className="title-lg">Central Admin <span className="gradient-text">Dashboard</span></h2>
+        <p className="text-muted">You have ALL ACCESS. Easily manage all items from all merchants on the platform.</p>
       </div>
 
       <div className="admin-grid">

@@ -13,6 +13,7 @@ import Merchants from './pages/Merchants';
 import OrderHistory from './pages/OrderHistory';
 import Restaurant from './pages/Restaurant';
 import Search from './pages/Search';
+import { Terms, Privacy } from './pages/Legal';
 import NotFound from './pages/NotFound';
 import './App.css';
 
@@ -33,6 +34,8 @@ function AppInner() {
             <Route path="/history" element={<OrderHistory />} />
             <Route path="/restaurant/:id" element={<Restaurant />} />
             <Route path="/search" element={<Search />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

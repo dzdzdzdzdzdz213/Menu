@@ -12,24 +12,9 @@ const CartDrawer = () => {
 
   const cartTotal = cart.reduce((total, item) => total + item.price, 0);
 
-  const triggerWhatsAppOrder = () => {
-    setIsCheckingOut(true);
-    
-    let orderText = "Hello! I would like to order:\n\n";
-    cart.forEach(item => {
-      orderText += `- ${item.name} (${item.price} DZD)\n`;
-    });
-    orderText += `\nTotal: ${cartTotal} DZD\n\nIs this available?`;
-    
-    const encodedText = encodeURIComponent(orderText);
-    const phoneNumber = "213555555555";
-    
-    setTimeout(() => {
-      window.open(`https://wa.me/${phoneNumber}?text=${encodedText}`, '_blank');
-      setCheckoutDone(true);
-      setIsCheckingOut(false);
-      addToast('Redirecting to WhatsApp for order confirmation.', 'success');
-    }, 1000);
+  const handleCheckoutClick = () => {
+    setIsCartOpen(false);
+    navigate('/checkout');
   };
 
   if (!isCartOpen) return null;
@@ -52,14 +37,14 @@ const CartDrawer = () => {
               <p>Your cart is empty.</p>
             </div>
           ) : (
-            cart.map((item, index) => (
-              <div key={`${item.id}-${index}`} className="cart-item">
+            cart.map((item) => (
+              <div key={item.cartId} className="cart-item">
                 <img src={item.image_url} alt={item.name} className="cart-item-img" />
                 <div className="cart-item-info">
                   <h4>{item.name}</h4>
                   <span className="price">{item.price} DZD</span>
                 </div>
-                <button className="btn-icon text-red" onClick={() => removeFromCart(item.id)}>
+                <button className="btn-icon text-red" onClick={() => removeFromCart(item.cartId)}>
                   <Trash2 size={16} />
                 </button>
               </div>
@@ -77,14 +62,9 @@ const CartDrawer = () => {
             {!checkoutDone ? (
               <button 
                 className="btn-primary w-100 chromatic-shift" 
-                onClick={triggerWhatsAppOrder}
-                disabled={isCheckingOut}
+                onClick={handleCheckoutClick}
               >
-                {isCheckingOut ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  <>Order via WhatsApp</>
-                )}
+                Begin Checkout <ArrowRight size={18} style={{ marginLeft: 8 }} />
               </button>
             ) : (
               <div style={{ textAlign: 'center', padding: '1rem', color: '#10B981', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '12px' }}>

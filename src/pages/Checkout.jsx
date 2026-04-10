@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../hooks/useApp';
 import EmptyState from '../components/EmptyState';
 import toast from 'react-hot-toast';
+import { supabase } from '../lib/supabase';
 import { useSEO } from '../hooks/useSEO';
 
 const Checkout = () => {
@@ -31,20 +32,63 @@ const Checkout = () => {
   }, {});
   const groupedCart = Object.values(groupedCartInfo);
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (cart.length === 0) return;
     setIsProcessing(true);
     
-    // Simulate secure transaction network delay
-    setTimeout(() => {
+    try {
+      // Find the merchant's WhatsApp number
+      const firstItem = cart[0];
+      const merchantId = firstItem.merchant_id;
+      let whatsappNum = '213000000000'; // Platform Default
+      let restaurantName = firstItem.brand || 'Store';
+      
+      // 1. Check Local Merchant Profile (Most priority for Demo)
+      const globalMap = JSON.parse(localStorage.getItem('global_merchants_data') || '{}');
+      const localProfile = JSON.parse(localStorage.getItem(`merchant_profile_${merchantId}`) || '{}');
+      const profile = globalMap[merchantId] || localProfile;
+      
+      if (profile && profile.whatsapp) {
+        whatsappNum = profile.whatsapp;
+        restaurantName = profile.name;
+      } else {
+        // 2. Fallback to Supabase if ID looks like a real DB ID
+        if (merchantId && !String(merchantId).startsWith('demo')) {
+          const { data: restData } = await supabase.from('restaurants').select('whatsapp_number, name').eq('id', merchantId).single();
+          if (restData && restData.whatsapp_number) {
+            whatsappNum = restData.whatsapp_number;
+            restaurantName = restData.name;
+          }
+        }
+      }
+      
+      // Build order text
+      let text = `Hello *${restaurantName}*, I would like to place an order:%0A%0A`;
+      groupedCart.forEach(g => {
+        text += `- ${g.quantity}x ${g.item.name} (${g.item.price * g.quantity} DZD)%0A`;
+      });
+      text += `%0A*Subtotal:* ${total} DZD%0A*Total + Fees:* ${total + 350} DZD%0A%0A`;
+      text += `Please let me know how long it will take.`;
+      
+      const waUrl = `https://wa.me/${whatsappNum.replace(/[^0-9]/g, '')}?text=${text}`;
+      
       setIsProcessing(false);
       setIsPlaced(true);
-      toast.success("Order confirmed successfully!");
-      // Automatically clear cart natively by firing remove repeatedly without breaking context references
+      toast.success("Redirecting to WhatsApp...");
+      
+      // Clear cart
       groupedCart.forEach(group => {
         group.cartIds.forEach(id => removeFromCart(id));
       });
-    }, 2000);
+      
+      // Redirect
+      window.open(waUrl, '_blank');
+      
+    } catch(err) {
+      console.error(err);
+      toast.error('Failed to process order.');
+      setIsProcessing(false);
+    }
   };
 
   if (isPlaced) {
@@ -52,13 +96,12 @@ const Checkout = () => {
       <div className="container page-transition" style={{ paddingTop: '8rem', minHeight: '100vh', maxWidth: '800px', textAlign: 'center' }}>
         <div className="glass" style={{ padding: '5rem 2rem', borderRadius: '24px' }}>
           <CheckCircle2 size={80} className="text-red" style={{ margin: '0 auto 2rem' }} />
-          <h2 className="title-lg" style={{ marginBottom: '1rem' }}>Order Placed!</h2>
+          <h2 className="title-lg" style={{ marginBottom: '1rem' }}>Sent to WhatsApp!</h2>
           <p className="text-muted" style={{ marginBottom: '3rem', fontSize: '1.2rem', maxWidth: '500px', margin: '0 auto 3rem' }}>
-            We've received your order and the restaurant is currently preparing it. You can check the status moving forward.
+            We've redirected you to the merchant's WhatsApp to finish your order directly.
           </p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-            <button className="btn-outline" onClick={() => navigate('/history')}>View Order History</button>
-            <button className="btn-primary" onClick={() => navigate('/')}>Continue Exploring</button>
+             <button className="btn-primary" onClick={() => navigate('/')}>Continue Exploring</button>
           </div>
         </div>
       </div>
