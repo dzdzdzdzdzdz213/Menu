@@ -200,7 +200,7 @@ const Restaurant = () => {
         return <ReviewSystem entityId={id} type="merchant" initialReviews={[]} />;
         
       case 'Reservations':
-        return <BookingEngine />;
+        return <BookingEngine merchantId={merchant.id} whatsapp={merchant.whatsapp} merchantName={merchant.name} />;
         
       default:
         return null;

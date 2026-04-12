@@ -73,6 +73,8 @@ ALTER TABLE public.product_reviews ENABLE ROW LEVEL SECURITY;
 
 -- PROFILES
 CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles FOR SELECT USING (is_active = TRUE);
+CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Users can insert own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "Admins can manage all profiles" ON public.profiles FOR ALL USING (
   (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
@@ -127,3 +129,35 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
+-- 8. Bookings Table
+CREATE TABLE IF NOT EXISTS public.bookings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  merchant_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  user_name TEXT,
+  user_phone TEXT,
+  date DATE NOT NULL,
+  time TIME NOT NULL,
+  guests INTEGER DEFAULT 2,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'cancelled')),
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can create bookings" ON public.bookings
+  FOR INSERT WITH CHECK (TRUE);
+
+CREATE POLICY "Merchants and bookers can view bookings" ON public.bookings
+  FOR SELECT USING (
+    auth.uid() = merchant_id OR auth.uid() = user_id
+    OR (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+  );
+
+CREATE POLICY "Merchants can update booking status" ON public.bookings
+  FOR UPDATE USING (
+    auth.uid() = merchant_id
+    OR (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+  );

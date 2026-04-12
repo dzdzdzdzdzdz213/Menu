@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -43,22 +43,49 @@ export const AppProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchProfile = async (userId) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      
-      if (error) {
-        // If profile doesn't exist yet, we'll wait for the trigger or creation
-        console.warn('Profile not found yet for user:', userId);
-        return;
+  const fetchProfile = async (userId, retries = 5) => {
+    for (let attempt = 0; attempt < retries; attempt++) {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+
+        if (!error && data) {
+          setUserProfile(data);
+          return data;
+        }
+
+        // Profile row not yet created by trigger — wait and retry
+        if (attempt < retries - 1) {
+          await new Promise(res => setTimeout(res, 600 * (attempt + 1)));
+          continue;
+        }
+
+        // Final attempt: upsert a skeleton profile so the user isn't stuck
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser) {
+          const { data: upserted, error: upsertError } = await supabase
+            .from('profiles')
+            .upsert({
+              id: userId,
+              full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || '',
+              avatar_url: authUser.user_metadata?.avatar_url || '',
+              role: 'user',
+            }, { onConflict: 'id' })
+            .select()
+            .single();
+
+          if (!upsertError && upserted) {
+            setUserProfile(upserted);
+            return upserted;
+          }
+          console.warn('Profile upsert failed:', upsertError?.message);
+        }
+      } catch (err) {
+        console.error('Error fetching profile (attempt', attempt + 1, '):', err);
       }
-      setUserProfile(data);
-    } catch (err) {
-      console.error('Error fetching profile:', err);
     }
   };
 
@@ -68,12 +95,16 @@ export const AppProvider = ({ children }) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin + '/account',
+          redirectTo: `${window.location.origin}/account`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         }
       });
       if (error) throw error;
     } catch (err) {
-      toast.error(err.message || 'Failed to sign in');
+      toast.error(err.message || 'Failed to sign in with Google');
       setIsLoggingIn(false);
     }
   };
@@ -90,7 +121,7 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const trackEvent = async (type, sellerId, productId = null) => {
+  const trackEvent = useCallback(async (type, sellerId, productId = null) => {
     if (!sellerId) return;
     try {
       await supabase.from('analytics').insert({
@@ -102,7 +133,7 @@ export const AppProvider = ({ children }) => {
     } catch (err) {
       console.error('Tracking failed:', err);
     }
-  };
+  }, [user?.id]);
 
   const addToCart = (item) => {
     if (cart.length > 0 && cart[0].merchant_id !== item.merchant_id) {

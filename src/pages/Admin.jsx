@@ -67,9 +67,12 @@ const Admin = () => {
     try {
       // Note: Real deletion usually happens via Supabase Auth Admin API, 
       // but here we mark as inactive OR delete from public.profiles.
-      const { error } = await supabase.from('profiles').delete().eq('id', id);
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_active: false })
+        .eq('id', id);
       if (error) throw error;
-      toast.success('User deleted');
+      toast.success('User deactivated');
       fetchAdminData();
     } catch (err) {
       toast.error(err.message);
@@ -190,9 +193,9 @@ const Admin = () => {
                         <button 
                           onClick={() => handleDeleteUser(u.id)}
                           className="text-red" 
-                          style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
                         >
-                          <Trash2 size={16} />
+                          Deactivate
                         </button>
                       </td>
                     </tr>

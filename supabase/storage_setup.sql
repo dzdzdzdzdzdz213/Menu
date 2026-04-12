@@ -35,11 +35,12 @@ CREATE POLICY "Sellers can update own product images"
     AND auth.uid() IS NOT NULL
   );
 
+DROP POLICY IF EXISTS "Sellers can delete own product images" ON storage.objects;
 CREATE POLICY "Sellers can delete own product images"
   ON storage.objects FOR DELETE
   USING (
     bucket_id = 'product-images'
-    AND auth.uid() IS NOT NULL
+    AND split_part(name, '/', 1) = auth.uid()::text
   );
 
 -- hero-images: anyone can read, authenticated sellers can upload
@@ -62,9 +63,10 @@ CREATE POLICY "Sellers can update own hero images"
     AND auth.uid() IS NOT NULL
   );
 
+DROP POLICY IF EXISTS "Sellers can delete own hero images" ON storage.objects;
 CREATE POLICY "Sellers can delete own hero images"
   ON storage.objects FOR DELETE
   USING (
     bucket_id = 'hero-images'
-    AND auth.uid() IS NOT NULL
+    AND split_part(name, '/', 1) = auth.uid()::text
   );

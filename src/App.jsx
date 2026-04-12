@@ -17,6 +17,7 @@ import { Terms, Privacy } from './pages/Legal';
 import NotFound from './pages/NotFound';
 import SellerDashboard from './pages/SellerDashboard';
 import ProfileSetup from './pages/ProfileSetup';
+import ProtectedRoute from './components/ProtectedRoute';
 
 import './App.css';
 
@@ -29,9 +30,15 @@ function AppInner() {
         <main>
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/seller-dashboard" element={<SellerDashboard />} />
-            <Route path="/setup-profile" element={<ProfileSetup />} />
+            <Route path="/admin" element={
+              <ProtectedRoute requiredRole="admin"><Admin /></ProtectedRoute>
+            } />
+            <Route path="/seller-dashboard" element={
+              <ProtectedRoute requiredRole="seller"><SellerDashboard /></ProtectedRoute>
+            } />
+            <Route path="/setup-profile" element={
+              <ProtectedRoute><ProfileSetup /></ProtectedRoute>
+            } />
             <Route path="/account" element={<Account />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/delivery" element={<Delivery />} />
