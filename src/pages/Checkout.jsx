@@ -137,16 +137,23 @@ const Checkout = () => {
             <div className="glass" style={{ padding: '2rem', borderRadius: '16px' }}>
                <h3 className="title-md" style={{ marginBottom: '1.5rem' }}>Review Items</h3>
                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                 {groupedCart.map((group) => (
+                 {groupedCart.map((group) => {
+                    const imgSrc = group.item.imageUrl || group.item.image_url;
+                    return (
                     <div key={group.item.id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                       <img src={group.item.imageUrl} alt={group.item.name} style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
+                       {imgSrc ? (
+                          <img src={imgSrc} alt={group.item.name} style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
+                       ) : (
+                          <div style={{ width: '60px', height: '60px', borderRadius: '8px', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>🍽️</div>
+                       )}
                        <div style={{ flex: 1 }}>
                           <h4 style={{ fontSize: '1.05rem', fontWeight: 600 }}>{group.item.name}</h4>
                           <p className="text-muted" style={{ fontSize: '0.85rem' }}>Qty: {group.quantity}</p>
                        </div>
                        <div style={{ fontWeight: 700 }}>{group.item.price * group.quantity} DZD</div>
                     </div>
-                 ))}
+                  );
+                 })}
                </div>
             </div>
           </div>

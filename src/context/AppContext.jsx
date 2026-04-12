@@ -105,6 +105,15 @@ export const AppProvider = ({ children }) => {
   };
 
   const addToCart = (item) => {
+    if (cart.length > 0 && cart[0].merchant_id !== item.merchant_id) {
+       if (window.confirm("You already have items from another restaurant in your cart. Would you like to clear your cart and start a new order?")) {
+           const newCart = [{ ...item, cartId: Date.now() }];
+           setCart(newCart);
+           localStorage.setItem('menu_cart', JSON.stringify(newCart));
+           setIsCartOpen(true);
+       }
+       return;
+    }
     const newCart = [...cart, { ...item, cartId: Date.now() }];
     setCart(newCart);
     localStorage.setItem('menu_cart', JSON.stringify(newCart));

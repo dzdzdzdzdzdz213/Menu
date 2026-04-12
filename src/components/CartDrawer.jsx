@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, Trash2, ShoppingBag, Loader2, CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { X, Trash2, ShoppingBag, Loader2, CheckCircle, ArrowRight } from 'lucide-react';
 import { useApp } from '../hooks/useApp';
 import { useToast } from '../hooks/useToast';
 import './CartDrawer.css';
@@ -7,6 +8,7 @@ import './CartDrawer.css';
 const CartDrawer = () => {
   const { isCartOpen, setIsCartOpen, cart, removeFromCart } = useApp();
   const { addToast } = useToast();
+  const navigate = useNavigate();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutDone, setCheckoutDone] = useState(false);
 
@@ -37,10 +39,18 @@ const CartDrawer = () => {
               <p>Your cart is empty.</p>
             </div>
           ) : (
-            cart.map((item) => (
-              <div key={item.cartId} className="cart-item">
-                <img src={item.image_url} alt={item.name} className="cart-item-img" />
-                <div className="cart-item-info">
+            cart.map((item) => {
+              const imgSrc = item.image_url || item.imageUrl;
+              return (
+                <div key={item.cartId} className="cart-item">
+                  {imgSrc ? (
+                    <img src={imgSrc} alt={item.name} className="cart-item-img" />
+                  ) : (
+                    <div className="cart-item-img" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.04)', fontSize: '1.5rem' }}>
+                      🍽️
+                    </div>
+                  )}
+                  <div className="cart-item-info">
                   <h4>{item.name}</h4>
                   <span className="price">{item.price} DZD</span>
                 </div>
@@ -48,7 +58,8 @@ const CartDrawer = () => {
                   <Trash2 size={16} />
                 </button>
               </div>
-            ))
+            );
+          })
           )}
         </div>
 
