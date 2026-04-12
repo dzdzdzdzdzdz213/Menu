@@ -174,8 +174,17 @@ const Restaurant = () => {
         return foods.length > 0 ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.5rem' }}>
             {foods.map((food, idx) => (
-              <div key={idx} style={{ aspectRatio: '1/1', overflow: 'hidden', borderRadius: '8px' }}>
-                <img src={food.imageUrl || 'https://via.placeholder.com/300'} alt="Gallery item" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div key={idx} style={{ aspectRatio: '1/1', overflow: 'hidden', borderRadius: '8px', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {food.imageUrl || food.image_url ? (
+                  <img
+                    src={food.imageUrl || food.image_url}
+                    alt={food.name || 'Gallery item'}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    onError={e => { e.target.style.display = 'none'; }}
+                  />
+                ) : (
+                  <span style={{ fontSize: '3rem' }}>🍽️</span>
+                )}
               </div>
             ))}
           </div>

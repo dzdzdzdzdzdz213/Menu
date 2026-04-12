@@ -19,10 +19,18 @@ const FoodCard = ({ product, item }) => {
 
   if (!data) return null;
 
+  const imgSrc = data.image_url || data.imageUrl;
+
   return (
     <div className="food-card">
       <div className="food-image-wrapper">
-        <img src={data.image_url || data.imageUrl} alt={data.name} className="food-image" loading="lazy" />
+        {imgSrc ? (
+          <img src={imgSrc} alt={data.name} className="food-image" loading="lazy" onError={e => { e.target.style.display='none'; e.target.nextSibling?.style && (e.target.nextSibling.style.display='flex'); }} />
+        ) : null}
+        <div className="food-image food-image-placeholder" style={{ display: imgSrc ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.04)', flexDirection: 'column', gap: '0.5rem' }}>
+          <span style={{ fontSize: '2.5rem' }}>🍽️</span>
+          <span className="text-muted" style={{ fontSize: '0.72rem' }}>No photo</span>
+        </div>
         <div className="card-hud">
           <div className="hud-item">
             <Star color="var(--color-orange)" size={12} fill="var(--color-orange)" /> 
