@@ -1,12 +1,11 @@
 import React from 'react';
 import { ShoppingBag, Star } from 'lucide-react';
 import { useApp } from '../hooks/useApp';
-import { useToast } from '../hooks/useToast';
+import toast from 'react-hot-toast';
 import './FoodCard.css';
 
 const FoodCard = ({ product, item }) => {
   const { addToCart } = useApp();
-  const { addToast } = useToast();
 
   const data = product || item; 
 
@@ -14,7 +13,7 @@ const FoodCard = ({ product, item }) => {
     e.stopPropagation(); // Prevent navigation if the card is ever wrapped in a link
     if (!data) return;
     addToCart(data);
-    addToast(`${data.name} added to order!`, 'success');
+    toast.success(`${data.name} added to cart`);
   };
 
   if (!data) return null;

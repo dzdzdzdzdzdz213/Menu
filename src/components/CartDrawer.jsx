@@ -2,17 +2,15 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Trash2, ShoppingBag, Loader2, CheckCircle, ArrowRight } from 'lucide-react';
 import { useApp } from '../hooks/useApp';
-import { useToast } from '../hooks/useToast';
 import './CartDrawer.css';
 
 const CartDrawer = () => {
   const { isCartOpen, setIsCartOpen, cart, removeFromCart } = useApp();
-  const { addToast } = useToast();
   const navigate = useNavigate();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutDone, setCheckoutDone] = useState(false);
 
-  const cartTotal = cart.reduce((total, item) => total + item.price, 0);
+  const cartTotal = cart.reduce((total, item) => total + Number(item.price), 0);
 
   const handleCheckoutClick = () => {
     setIsCartOpen(false);

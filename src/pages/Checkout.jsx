@@ -19,7 +19,7 @@ const Checkout = () => {
     url: '/checkout'
   });
 
-  const total = cart.reduce((sum, item) => sum + item.price, 0);
+  const total = cart.reduce((sum, item) => sum + Number(item.price), 0);
   const groupedCartInfo = cart.reduce((acc, item) => {
     if (!acc[item.id]) {
       acc[item.id] = { item, quantity: 1, cartIds: [item.cartId] };
@@ -39,7 +39,7 @@ const Checkout = () => {
       const firstItem = cart[0];
       const merchantId = firstItem.merchant_id;
       
-      // Fetch Merchant Profile for WhatsApp
+      // Fetch Merchant Profile for WhatsApp and Delivery Fee
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
@@ -54,11 +54,38 @@ const Checkout = () => {
 
       const whatsappNum = profile.whatsapp || profile.phone;
       const restaurantName = profile.full_name;
+      const merchantDeliveryFee = profile.delivery_fee ?? 350;
 
       if (!whatsappNum) {
         toast.error('Seller WhatsApp not available');
         setIsProcessing(false);
         return;
+      }
+
+      // Save order to database
+      const orderItems = groupedCart.map(g => ({
+        id: g.item.id,
+        name: g.item.name,
+        price: Number(g.item.price),
+        quantity: g.quantity
+      }));
+
+      const { error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          merchant_id: merchantId,
+          user_id: user?.id,
+          user_name: userProfile?.full_name || 'Guest',
+          user_phone: userProfile?.phone || '',
+          items: orderItems,
+          total: total,
+          delivery_fee: merchantDeliveryFee,
+          status: 'pending'
+        });
+
+      if (orderError) {
+        console.error('Database order save failed:', orderError);
+        toast.error('Order logic error, but proceeding to WhatsApp...');
       }
 
       // Track conversion
@@ -67,9 +94,9 @@ const Checkout = () => {
       // Build order text
       let text = `Hello *${restaurantName}*, I would like to place an order from Menu platform:%0A%0A`;
       groupedCart.forEach(g => {
-        text += `- ${g.quantity}x ${g.item.name} (${g.item.price * g.quantity} DZD)%0A`;
+        text += `- ${g.quantity}x ${g.item.name} (${Number(g.item.price) * g.quantity} DZD)%0A`;
       });
-      text += `%0A*Subtotal:* ${total} DZD%0A*Delivery + Fees:* 350 DZD%0A*Total:* ${total + 350} DZD%0A%0A`;
+      text += `%0A*Subtotal:* ${total} DZD%0A*Delivery + Fees:* ${merchantDeliveryFee} DZD%0A*Total:* ${total + merchantDeliveryFee} DZD%0A%0A`;
       text += `Please let me know how long it will take. My address is being provided in the next message.`;
       
       const waUrl = `https://wa.me/${whatsappNum.replace(/[^0-9]/g, '')}?text=${text}`;
@@ -102,12 +129,25 @@ const Checkout = () => {
             We've sent your order details to the shop via WhatsApp. Please continue the conversation there.
           </p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-             <button className="btn-primary" onClick={() => navigate('/')}>Continue Exploring</button>
+             <button className="btn-primary" onClick={() => navigate('/history')}>View Order History</button>
+             <button className="btn-outline" onClick={() => navigate('/')}>Continue Exploring</button>
           </div>
         </div>
       </div>
     );
   }
+
+  // Helper function to get merchant delivery fee for display
+  const [merchantFee, setMerchantFee] = useState(350);
+  React.useEffect(() => {
+    if (cart.length > 0) {
+      const fetchFee = async () => {
+        const { data } = await supabase.from('profiles').select('delivery_fee').eq('id', cart[0].merchant_id).single();
+        if (data) setMerchantFee(data.delivery_fee ?? 350);
+      };
+      fetchFee();
+    }
+  }, [cart]);
 
   return (
     <div className="container page-transition" style={{ paddingTop: '6rem', paddingBottom: '6rem', minHeight: '100vh', maxWidth: '1000px' }}>
@@ -150,7 +190,7 @@ const Checkout = () => {
                           <h4 style={{ fontSize: '1.05rem', fontWeight: 600 }}>{group.item.name}</h4>
                           <p className="text-muted" style={{ fontSize: '0.85rem' }}>Qty: {group.quantity}</p>
                        </div>
-                       <div style={{ fontWeight: 700 }}>{group.item.price * group.quantity} DZD</div>
+                       <div style={{ fontWeight: 700 }}>{Number(group.item.price) * group.quantity} DZD</div>
                     </div>
                   );
                  })}
@@ -170,12 +210,12 @@ const Checkout = () => {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-muted)' }}>
                   <span>Delivery & Fees</span>
-                  <span>350 DZD</span>
+                  <span>{merchantFee} DZD</span>
                 </div>
                 <div style={{ height: '1px', background: 'var(--glass-border)', margin: '0.5rem 0' }}></div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.3rem', fontWeight: 800 }}>
                   <span>Total</span>
-                  <span className="text-red">{total + 350} DZD</span>
+                  <span className="text-red">{total + merchantFee} DZD</span>
                 </div>
               </div>
 

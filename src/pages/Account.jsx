@@ -28,7 +28,7 @@ const Account = () => {
   useEffect(() => {
     if (!loading && user) {
       if (!userProfile?.phone || !userProfile?.age) {
-        navigate('/setup-profile');
+        navigate('/setup-profile', { state: { fromAuth: true } });
       }
     }
   }, [user, userProfile, loading, navigate]);

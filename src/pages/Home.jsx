@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import FoodCard from '../components/FoodCard';
 import { supabase } from '../lib/supabase';
 import { useApp } from '../hooks/useApp';
-import { useToast } from '../hooks/useToast';
+import toast from 'react-hot-toast';
 import { Loader2, Utensils, Flame, ChevronRight, Store, Shield, User, Star, ArrowRight, ShoppingBag } from 'lucide-react';
 import './Home.css';
 
@@ -21,9 +21,9 @@ const CATEGORY_ICONS = {
 const Home = () => {
   const { t } = useTranslation();
   const { addToCart } = useApp();
-  const { addToast } = useToast();
   const [items, setItems] = useState([]);
   const [merchants, setMerchants] = useState([]);
+  const [clickCounts, setClickCounts] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('All');
   const navigate = useNavigate();
@@ -53,6 +53,21 @@ const Home = () => {
           imageUrl: p.image_url
         })) || []);
 
+        // 3. Fetch Click Analytics
+        const { data: aData } = await supabase
+          .from('analytics')
+          .select('product_id')
+          .eq('event_type', 'whatsapp_click');
+        
+        const counts = (aData || []).reduce((acc, curr) => {
+          if (curr.product_id) {
+            acc[curr.product_id] = (acc[curr.product_id] || 0) + 1;
+          }
+          return acc;
+        }, {});
+        
+        setClickCounts(counts);
+
       } catch (err) {
         console.error('Data fetch error:', err);
       } finally {
@@ -62,12 +77,21 @@ const Home = () => {
     fetchData();
   }, []);
 
-  const hotItems = [...items].sort((a, b) => b.price - a.price).slice(0, 3);
+  const hotItems = [...items]
+    .sort((a, b) => {
+      const countA = clickCounts[a.id] || 0;
+      const countB = clickCounts[b.id] || 0;
+      if (countB !== countA) return countB - countA;
+      // Fallback to newest
+      return new Date(b.created_at) - new Date(a.created_at);
+    })
+    .slice(0, 3);
+
   const filteredItems = activeCategory === 'All' ? items : items.filter(i => i.category === activeCategory);
 
   const handleAddHot = (item) => {
     addToCart(item);
-    addToast(`${item.name} added to order!`, 'success');
+    toast.success(`${item.name} added to order!`);
   };
 
   return (

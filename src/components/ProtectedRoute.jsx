@@ -15,8 +15,12 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     );
   }
 
-  if (!user) {
-    return <Navigate to="/account" state={{ from: location }} replace />;
+  if (user && userProfile === null) {
+     return (
+       <div style={{ paddingTop: '12rem', textAlign: 'center' }}>
+         <Loader2 size={40} className="animate-spin text-red" style={{ margin: '0 auto' }} />
+       </div>
+     );
   }
 
   if (requiredRole && userProfile?.role !== requiredRole) {

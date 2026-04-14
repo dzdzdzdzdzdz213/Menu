@@ -123,6 +123,14 @@ export const AppProvider = ({ children }) => {
 
   const trackEvent = useCallback(async (type, sellerId, productId = null) => {
     if (!sellerId) return;
+    
+    // Deduplicate visits in the same session
+    if (type === 'visit') {
+      const storageKey = `visited_${sellerId}`;
+      if (sessionStorage.getItem(storageKey)) return;
+      sessionStorage.setItem(storageKey, '1');
+    }
+
     try {
       await supabase.from('analytics').insert({
         event_type: type,

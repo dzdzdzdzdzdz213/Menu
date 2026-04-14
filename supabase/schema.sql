@@ -1,6 +1,13 @@
 -- Supabase Database Schema & Row Level Security (RLS) Settings
 -- Instructions: Run this script in the Supabase Dashboard SQL Editor to secure your database.
 
+-- 0. Helper Function for Role Checks (Prevents RLS Recursion)
+CREATE OR REPLACE FUNCTION public.get_my_role()
+RETURNS TEXT LANGUAGE sql STABLE SECURITY DEFINER
+AS $$ 
+  SELECT role FROM public.profiles WHERE id = auth.uid();
+$$;
+
 -- 1. Profiles table (unified for all roles)
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID REFERENCES auth.users(id) PRIMARY KEY,
@@ -14,6 +21,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   location TEXT,
   social_links JSONB DEFAULT '{}',
   hero_image_url TEXT,
+  delivery_fee NUMERIC DEFAULT 350,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -62,75 +70,21 @@ CREATE TABLE IF NOT EXISTS public.product_reviews (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 5. Enable Row Level Security (RLS)
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.analytics ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.merchant_reviews ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.product_reviews ENABLE ROW LEVEL SECURITY;
-
--- 6. Configure RLS Policies
-
--- PROFILES
-CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles FOR SELECT USING (is_active = TRUE);
-CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Users can insert own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
-CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY "Admins can manage all profiles" ON public.profiles FOR ALL USING (
-  (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+-- 5. Orders Table
+CREATE TABLE IF NOT EXISTS public.orders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  merchant_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  user_name TEXT,
+  user_phone TEXT,
+  items JSONB NOT NULL,
+  total NUMERIC NOT NULL,
+  delivery_fee NUMERIC DEFAULT 0,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'cancelled')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- PRODUCTS
-CREATE POLICY "Products are viewable by everyone" ON public.products FOR SELECT USING (status = 'active');
-CREATE POLICY "Sellers can manage own products" ON public.products FOR ALL USING (
-  auth.uid() = merchant_id AND 
-  (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'seller'
-);
-CREATE POLICY "Admins can manage all products" ON public.products FOR ALL USING (
-  (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
-);
-
--- ANALYTICS
-CREATE POLICY "Anyone can insert analytics" ON public.analytics FOR INSERT WITH CHECK (TRUE);
-CREATE POLICY "Sellers can view own analytics" ON public.analytics FOR SELECT USING (
-  auth.uid() = seller_id OR 
-  (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
-);
-
--- REVIEWS
-CREATE POLICY "Reviews are viewable by everyone" ON public.merchant_reviews FOR SELECT USING (TRUE);
-CREATE POLICY "Users can insert reviews" ON public.merchant_reviews FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
-CREATE POLICY "Admins can moderate reviews" ON public.merchant_reviews FOR DELETE USING (
-  (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
-);
-
-CREATE POLICY "Product reviews are viewable by everyone" ON public.product_reviews FOR SELECT USING (TRUE);
-CREATE POLICY "Users can insert product reviews" ON public.product_reviews FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
-CREATE POLICY "Admins can moderate product reviews" ON public.product_reviews FOR DELETE USING (
-  (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
-);
-
--- 7. Trigger to automatically create profile on Auth Signup
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger AS $$
-BEGIN
-  INSERT INTO public.profiles (id, full_name, avatar_url, role)
-  VALUES (
-    new.id, 
-    COALESCE(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name'), 
-    new.raw_user_meta_data->>'avatar_url',
-    COALESCE(new.raw_user_meta_data->>'role', 'user')
-  );
-  RETURN new;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
-
--- 8. Bookings Table
+-- 6. Bookings Table
 CREATE TABLE IF NOT EXISTS public.bookings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   merchant_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -145,19 +99,76 @@ CREATE TABLE IF NOT EXISTS public.bookings (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 7. Enable Row Level Security (RLS)
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.analytics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.merchant_reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.product_reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Anyone can create bookings" ON public.bookings
-  FOR INSERT WITH CHECK (TRUE);
+-- 8. Configure RLS Policies
 
-CREATE POLICY "Merchants and bookers can view bookings" ON public.bookings
-  FOR SELECT USING (
-    auth.uid() = merchant_id OR auth.uid() = user_id
-    OR (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
-  );
+-- PROFILES
+CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles FOR SELECT USING (is_active = TRUE);
+CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Users can insert own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Admins can manage all profiles" ON public.profiles FOR ALL USING (public.get_my_role() = 'admin');
 
-CREATE POLICY "Merchants can update booking status" ON public.bookings
-  FOR UPDATE USING (
-    auth.uid() = merchant_id
-    OR (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+-- PRODUCTS
+CREATE POLICY "Products are viewable by everyone" ON public.products FOR SELECT USING (status = 'active');
+CREATE POLICY "Sellers can manage own products" ON public.products FOR ALL USING (
+  auth.uid() = merchant_id AND public.get_my_role() = 'seller'
+);
+CREATE POLICY "Admins can manage all products" ON public.products FOR ALL USING (public.get_my_role() = 'admin');
+
+-- ANALYTICS
+CREATE POLICY "Anyone can insert analytics" ON public.analytics FOR INSERT WITH CHECK (TRUE);
+CREATE POLICY "Sellers can view own analytics" ON public.analytics FOR SELECT USING (
+  auth.uid() = seller_id OR public.get_my_role() = 'admin'
+);
+
+-- REVIEWS
+CREATE POLICY "Reviews are viewable by everyone" ON public.merchant_reviews FOR SELECT USING (TRUE);
+CREATE POLICY "Users can insert reviews" ON public.merchant_reviews FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+CREATE POLICY "Admins can moderate reviews" ON public.merchant_reviews FOR DELETE USING (public.get_my_role() = 'admin');
+
+CREATE POLICY "Product reviews are viewable by everyone" ON public.product_reviews FOR SELECT USING (TRUE);
+CREATE POLICY "Users can insert product reviews" ON public.product_reviews FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+CREATE POLICY "Admins can moderate product reviews" ON public.product_reviews FOR DELETE USING (public.get_my_role() = 'admin');
+
+-- ORDERS
+CREATE POLICY "Anyone can create orders" ON public.orders FOR INSERT WITH CHECK (TRUE);
+CREATE POLICY "Users can view own orders" ON public.orders FOR SELECT USING (auth.uid() = user_id OR public.get_my_role() = 'admin');
+CREATE POLICY "Merchants can view their orders" ON public.orders FOR SELECT USING (auth.uid() = merchant_id OR public.get_my_role() = 'admin');
+
+-- BOOKINGS
+CREATE POLICY "Anyone can create bookings" ON public.bookings FOR INSERT WITH CHECK (TRUE);
+CREATE POLICY "Merchants and bookers can view bookings" ON public.bookings FOR SELECT USING (
+  auth.uid() = merchant_id OR auth.uid() = user_id OR public.get_my_role() = 'admin'
+);
+CREATE POLICY "Merchants can update booking status" ON public.bookings FOR UPDATE USING (
+  auth.uid() = merchant_id OR public.get_my_role() = 'admin'
+);
+
+-- 9. Trigger to automatically create profile on Auth Signup
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles (id, full_name, avatar_url, role)
+  VALUES (
+    new.id, 
+    COALESCE(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name'), 
+    new.raw_user_meta_data->>'avatar_url',
+    'user' -- Ignore any role metadata from OAuth for security
   );
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();

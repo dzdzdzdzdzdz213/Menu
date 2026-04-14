@@ -12,7 +12,11 @@ import {
   Save,
   Loader2,
   MessageSquare,
-  ImageOff
+  ImageOff,
+  Calendar,
+  Check,
+  XCircle,
+  Clock
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './Admin.css';
@@ -21,7 +25,8 @@ const SellerDashboard = () => {
   const { user, userProfile, fetchProfile, signOut } = useApp();
   const [activeTab, setActiveTab] = useState('menu');
   const [products, setProducts] = useState([]);
-  const [stats, setStats] = useState({ visits: 0, clicks: 0 });
+  const [bookings, setBookings] = useState([]);
+  const [stats, setStats] = useState({ visits: 0, clicks: 0, orders: 0, bookings: 0 });
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -40,6 +45,7 @@ const SellerDashboard = () => {
     location: '',
     whatsapp: '',
     hero_image_url: '',
+    delivery_fee: 350,
     social_links: {}
   });
 
@@ -51,6 +57,7 @@ const SellerDashboard = () => {
         location: userProfile.location || '',
         whatsapp: userProfile.whatsapp || '',
         hero_image_url: userProfile.hero_image_url || '',
+        delivery_fee: userProfile.delivery_fee || 350,
         social_links: userProfile.social_links || {}
       });
       fetchData();
@@ -68,18 +75,51 @@ const SellerDashboard = () => {
 
       setProducts(prods || []);
 
+      const { data: bData } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('merchant_id', user.id)
+        .order('created_at', { ascending: false });
+      
+      setBookings(bData || []);
+
       const { data: analytics } = await supabase
         .from('analytics')
         .select('event_type')
         .eq('seller_id', user.id);
 
+      const { data: oData } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('merchant_id', user.id);
+
       const visits = analytics?.filter(a => a.event_type === 'visit').length || 0;
       const clicks = analytics?.filter(a => a.event_type === 'whatsapp_click').length || 0;
-      setStats({ visits, clicks });
+      setStats({ 
+        visits, 
+        clicks, 
+        orders: oData?.length || 0,
+        bookings: bData?.length || 0 
+      });
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUpdateBooking = async (id, newStatus) => {
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ status: newStatus })
+        .eq('id', id);
+      
+      if (error) throw error;
+      toast.success(`Booking ${newStatus}`);
+      fetchData();
+    } catch (err) {
+      toast.error(err.message);
     }
   };
 
@@ -110,7 +150,11 @@ const SellerDashboard = () => {
     try {
       const { error } = await supabase
         .from('products')
-        .insert([{ ...newItem, merchant_id: user.id }]);
+        .insert([{ 
+          ...newItem, 
+          price: Number(newItem.price),
+          merchant_id: user.id 
+        }]);
 
       if (error) throw error;
       toast.success('Product added to menu!');
@@ -163,6 +207,7 @@ const SellerDashboard = () => {
 
       <div className="profile-tabs glass" style={{ marginBottom: '2rem' }}>
         <button onClick={() => setActiveTab('menu')} className={`tab-btn ${activeTab === 'menu' ? 'active' : ''}`}>Menu</button>
+        <button onClick={() => setActiveTab('bookings')} className={`tab-btn ${activeTab === 'bookings' ? 'active' : ''}`}>Bookings</button>
         <button onClick={() => setActiveTab('profile')} className={`tab-btn ${activeTab === 'profile' ? 'active' : ''}`}>Shop Setup</button>
         <button onClick={() => setActiveTab('stats')} className={`tab-btn ${activeTab === 'stats' ? 'active' : ''}`}>Insights</button>
       </div>
@@ -324,6 +369,16 @@ const SellerDashboard = () => {
                 />
               </div>
 
+              <div className="form-group">
+                <label>Delivery Fee (DZD)</label>
+                <input
+                  type="number"
+                  className="base-input"
+                  value={profileData.delivery_fee}
+                  onChange={e => setProfileData({ ...profileData, delivery_fee: Number(e.target.value) })}
+                />
+              </div>
+
               {/* ── Cover / Hero image upload ── */}
               <div className="form-group" style={{ gridColumn: 'span 2' }}>
                 <ImageUploader
@@ -363,23 +418,82 @@ const SellerDashboard = () => {
 
       {/* ── STATS TAB ────────────────────────────────────────── */}
       {activeTab === 'stats' && (
-        <div className="admin-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
-          <div className="admin-card glass" style={{ textAlign: 'center', padding: '3rem' }}>
-            <BarChart3 size={48} className="text-red" style={{ marginBottom: '1rem' }} />
-            <h4 className="title-lg">{stats.visits}</h4>
-            <p className="text-muted">Total Page Visits</p>
+        <div className="admin-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+          <div className="admin-card glass" style={{ textAlign: 'center', padding: '2rem' }}>
+            <BarChart3 size={40} className="text-red" style={{ marginBottom: '1rem' }} />
+            <h4 className="title-md">{stats.visits}</h4>
+            <p className="text-muted" style={{ fontSize: '0.9rem' }}>Page Visits</p>
           </div>
-          <div className="admin-card glass" style={{ textAlign: 'center', padding: '3rem' }}>
-            <MessageSquare size={48} className="text-red" style={{ marginBottom: '1rem' }} />
-            <h4 className="title-lg">{stats.clicks}</h4>
-            <p className="text-muted">WhatsApp Order Clicks</p>
+          <div className="admin-card glass" style={{ textAlign: 'center', padding: '2rem' }}>
+            <MessageSquare size={40} className="text-red" style={{ marginBottom: '1rem' }} />
+            <h4 className="title-md">{stats.clicks}</h4>
+            <p className="text-muted" style={{ fontSize: '0.9rem' }}>WA Clicks</p>
           </div>
-          <div className="admin-card glass" style={{ textAlign: 'center', padding: '3rem' }}>
-            <h4 className="title-lg">
-              {stats.visits > 0 ? ((stats.clicks / stats.visits) * 100).toFixed(1) : 0}%
-            </h4>
-            <p className="text-muted">Conversion Rate</p>
+          <div className="admin-card glass" style={{ textAlign: 'center', padding: '2rem' }}>
+            <ShoppingBag size={40} className="text-red" style={{ marginBottom: '1rem' }} />
+            <h4 className="title-md">{stats.orders}</h4>
+            <p className="text-muted" style={{ fontSize: '0.9rem' }}>Saved Orders</p>
           </div>
+          <div className="admin-card glass" style={{ textAlign: 'center', padding: '2rem' }}>
+            <Calendar size={40} className="text-red" style={{ marginBottom: '1rem' }} />
+            <h4 className="title-md">{stats.bookings}</h4>
+            <p className="text-muted" style={{ fontSize: '0.9rem' }}>Bookings</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── BOOKINGS TAB ────────────────────────────────────── */}
+      {activeTab === 'bookings' && (
+        <div className="admin-card glass">
+          <h3 className="title-md" style={{ marginBottom: '2rem' }}>Customer Reservations</h3>
+          {bookings.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-muted)' }}>
+              <Calendar size={48} style={{ marginBottom: '1rem', opacity: 0.4 }} />
+              <p>No table bookings yet.</p>
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Customer</th>
+                    <th>Date & Time</th>
+                    <th>Guests</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bookings.map(b => (
+                    <tr key={b.id}>
+                      <td>
+                        <div style={{ fontWeight: 600 }}>{b.user_name}</div>
+                        <div style={{ fontSize: '0.8rem' }} className="text-muted">{b.user_phone}</div>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Calendar size={14} /> {b.date}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Clock size={14} /> {b.time}</div>
+                      </td>
+                      <td>{b.guests} People</td>
+                      <td>
+                        <span className={`badge-glass ${b.status}`}>{b.status}</span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          {b.status === 'pending' && (
+                            <>
+                              <button onClick={() => handleUpdateBooking(b.id, 'confirmed')} className="btn-icon text-green" title="Confirm"><Check size={18} /></button>
+                              <button onClick={() => handleUpdateBooking(b.id, 'cancelled')} className="btn-icon text-red" title="Cancel"><XCircle size={18} /></button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../hooks/useApp';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import { User, Phone, Calendar, Store, ShoppingBag } from 'lucide-react';
@@ -8,6 +8,7 @@ import { User, Phone, Calendar, Store, ShoppingBag } from 'lucide-react';
 const ProfileSetup = () => {
   const { user, userProfile, fetchProfile } = useApp();
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -32,12 +33,14 @@ const ProfileSetup = () => {
         location: userProfile.location || ''
       });
       
-      // If profile is already complete, redirect away
-      if (userProfile.phone && userProfile.age && userProfile.role) {
-        navigate('/account');
+      // Only auto-redirect if we just came from a fresh Auth login (flagged by Account.jsx)
+      // and the profile is already considered complete.
+      const isComplete = userProfile.phone && userProfile.age && (userProfile.role !== 'user' || userProfile.description);
+      if (location.state?.fromAuth && isComplete) {
+        navigate(userProfile.role === 'seller' ? '/seller-dashboard' : '/account');
       }
     }
-  }, [userProfile, navigate]);
+  }, [userProfile, navigate, location.state]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -135,7 +138,8 @@ const ProfileSetup = () => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <button 
                 type="button"
-                onClick={() => setFormData({...formData, role: 'user'})}
+                onClick={() => userProfile?.role === 'user' && setFormData({...formData, role: 'user'})}
+                disabled={userProfile?.role !== 'user'}
                 className={`glass ${formData.role === 'user' ? 'active-tab' : ''}`}
                 style={{ 
                   padding: '1.5rem', 
@@ -145,7 +149,9 @@ const ProfileSetup = () => {
                   alignItems: 'center', 
                   gap: '0.5rem',
                   border: formData.role === 'user' ? '2px solid var(--color-red)' : '1px solid var(--glass-border)',
-                  background: formData.role === 'user' ? 'rgba(255,0,0,0.1)' : 'transparent'
+                  background: formData.role === 'user' ? 'rgba(255,0,0,0.1)' : 'transparent',
+                  opacity: userProfile?.role !== 'user' && formData.role !== 'user' ? 0.5 : 1,
+                  cursor: userProfile?.role !== 'user' ? 'not-allowed' : 'pointer'
                 }}
               >
                 <ShoppingBag size={24} className={formData.role === 'user' ? 'text-red' : 'text-muted'} />
@@ -153,7 +159,8 @@ const ProfileSetup = () => {
               </button>
               <button 
                 type="button"
-                onClick={() => setFormData({...formData, role: 'seller'})}
+                onClick={() => userProfile?.role === 'user' && setFormData({...formData, role: 'seller'})}
+                disabled={userProfile?.role !== 'user'}
                 className={`glass ${formData.role === 'seller' ? 'active-tab' : ''}`}
                 style={{ 
                   padding: '1.5rem', 
@@ -163,13 +170,18 @@ const ProfileSetup = () => {
                   alignItems: 'center', 
                   gap: '0.5rem',
                   border: formData.role === 'seller' ? '2px solid var(--color-red)' : '1px solid var(--glass-border)',
-                  background: formData.role === 'seller' ? 'rgba(255,0,0,0.1)' : 'transparent'
+                  background: formData.role === 'seller' ? 'rgba(255,0,0,0.1)' : 'transparent',
+                  opacity: userProfile?.role !== 'user' && formData.role !== 'seller' ? 0.5 : 1,
+                  cursor: userProfile?.role !== 'user' ? 'not-allowed' : 'pointer'
                 }}
               >
                 <Store size={24} className={formData.role === 'seller' ? 'text-red' : 'text-muted'} />
                 <span style={{ fontWeight: 600 }}>Seller</span>
               </button>
             </div>
+            {userProfile?.role !== 'user' && (
+              <p style={{ fontSize: '0.75rem', marginTop: '0.5rem' }} className="text-muted">Role cannot be changed once selected.</p>
+            )}
           </div>
 
           {formData.role === 'seller' && (

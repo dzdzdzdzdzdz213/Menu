@@ -64,7 +64,28 @@ const Restaurant = () => {
           cuisine: item.category || 'Main Dish'
         })));
 
-        // 3. Track Visit
+        // 3. Fetch Reviews for dynamic rating calculation
+        const { data: reviews, error: rError } = await supabase
+          .from('merchant_reviews')
+          .select('rating')
+          .eq('merchant_id', id);
+
+        if (!rError && reviews.length > 0) {
+          const avgRating = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
+          setMerchant(prev => ({
+            ...prev,
+            rating: avgRating.toFixed(1),
+            reviews: reviews.length
+          }));
+        } else {
+          setMerchant(prev => ({
+            ...prev,
+            rating: '0.0',
+            reviews: 0
+          }));
+        }
+
+        // 4. Track Visit
         trackEvent('visit', id);
 
       } catch (err) {
@@ -91,7 +112,7 @@ const Restaurant = () => {
     }
     trackEvent('whatsapp_click', id);
     const message = encodeURIComponent(`Hello ${merchant.name}, I would like to order from your menu on Menu platform.`);
-    window.open(`https://wa.me/${merchant.whatsapp.replace(/\+/g, '')}?text=${message}`, '_blank');
+    window.open(`https://wa.me/${merchant.whatsapp.replace(/[^0-9]/g, '')}?text=${message}`, '_blank');
   };
 
   if (isLoading) {
